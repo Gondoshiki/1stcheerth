@@ -4,645 +4,487 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Studio Manager — ระบบจัดการการเช่าอุปกรณ์</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F1F5F9;--surface:#fff;--sidebar:#1E293B;--sidebar-h:#334155;--accent:#6366F1;--accent-h:#4F46E5;--accent-l:#EEF2FF;--green:#059669;--green-bg:#ECFDF5;--red:#DC2626;--red-bg:#FEF2F2;--amber:#D97706;--amber-bg:#FFFBEB;--blue:#2563EB;--blue-bg:#EFF6FF;--orange:#C2410C;--orange-bg:#FFF7ED;--purple:#7C3AED;--purple-bg:#F5F3FF;--gray:#475569;--gray-bg:#F1F5F9;--text:#0F172A;--t2:#475569;--t3:#94A3B8;--border:#E2E8F0;--sh-sm:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);--sh:0 4px 12px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.05);--sh-lg:0 20px 60px rgba(0,0,0,.15),0 4px 12px rgba(0,0,0,.08);--r:12px;--r-sm:8px;}
-*{font-family:'Sarabun',sans-serif;box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);display:flex;height:100vh;overflow:hidden;color:var(--text);}
+:root{--bg:#F1F5F9;--sf:#fff;--sb:#1E293B;--sbh:#334155;--ac:#6366F1;--ach:#4F46E5;--al:#EEF2FF;--gr:#059669;--grb:#ECFDF5;--rd:#DC2626;--rdb:#FEF2F2;--am:#D97706;--amb:#FFFBEB;--bl:#2563EB;--blb:#EFF6FF;--or:#C2410C;--orb:#FFF7ED;--pu:#7C3AED;--pub:#F5F3FF;--gy:#475569;--gyb:#F1F5F9;--tx:#0F172A;--t2:#475569;--t3:#94A3B8;--bo:#E2E8F0;--s1:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);--s2:0 4px 12px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.05);--sl:0 20px 60px rgba(0,0,0,.15),0 4px 12px rgba(0,0,0,.08);--r:12px;--rs:8px;}
+*{font-family:"Sarabun",sans-serif;box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);display:flex;height:100vh;overflow:hidden;color:var(--tx);}
+/* Loader */
+#app-loader{position:fixed;inset:0;background:rgba(255,255,255,.92);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:38px;height:38px;border:3px solid var(--bo);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite;}
+.loader-txt{font-size:.875rem;color:var(--t2);}
 /* Sidebar */
-.sidebar{width:248px;background:var(--sidebar);display:flex;flex-direction:column;flex-shrink:0;height:100%;overflow-y:auto;}
-.s-logo{padding:1.125rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;}
-.s-icon{width:36px;height:36px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.s-nav{flex:1;padding:.625rem;display:flex;flex-direction:column;gap:2px;}
-.ni{display:flex;align-items:center;gap:9px;width:100%;padding:.6rem .875rem;border-radius:var(--r-sm);color:#94A3B8;font-size:.85rem;font-weight:500;cursor:pointer;border:none;background:none;text-align:left;transition:all .15s;border-left:3px solid transparent;}
-.ni:hover{background:var(--sidebar-h);color:#E2E8F0;}
-.ni.active{background:rgba(99,102,241,.18);color:#A5B4FC;border-left-color:var(--accent);}
-.s-stats{padding:.875rem;border-top:1px solid rgba(255,255,255,.06);}
+.sb{width:248px;background:var(--sb);display:flex;flex-direction:column;flex-shrink:0;height:100%;overflow-y:auto;}
+.sb-logo{padding:1.125rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;}
+.sb-ic{width:36px;height:36px;background:var(--ac);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sb-nav{flex:1;padding:.625rem;display:flex;flex-direction:column;gap:2px;}
+.ni{display:flex;align-items:center;gap:9px;width:100%;padding:.6rem .875rem;border-radius:var(--rs);color:#94A3B8;font-size:.85rem;font-weight:500;cursor:pointer;border:none;background:none;text-align:left;transition:all .15s;border-left:3px solid transparent;}
+.ni:hover{background:var(--sbh);color:#E2E8F0;}
+.ni.active{background:rgba(99,102,241,.18);color:#A5B4FC;border-left-color:var(--ac);}
+.sb-st{padding:.875rem;border-top:1px solid rgba(255,255,255,.06);}
+/* conn dot */
+.conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.conn-ok{background:#34D399;}.conn-err{background:#F87171;}.conn-wait{background:#FCD34D;}
 /* Main */
 main{flex:1;overflow-y:auto;padding:1.5rem;}
-.section{display:none;}.section.active{display:block;}
-/* Page header */
+.sec{display:none;}.sec.active{display:block;}
 .ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;gap:1rem;flex-wrap:wrap;}
-.pt{font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:2px;}
+.pt{font-size:1.25rem;font-weight:700;color:var(--tx);margin-bottom:2px;}
 .ps{font-size:.8125rem;color:var(--t2);}
 /* Stat cards */
-.sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:1.25rem;}
-.sc{background:var(--surface);border-radius:var(--r);padding:1rem 1.125rem;box-shadow:var(--sh-sm);display:flex;align-items:center;gap:12px;}
-.sc-ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.sc-lbl{font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px;}
-.sc-val{font-size:1.5rem;font-weight:700;line-height:1;}
-/* Category tabs */
-.cat-tabs{display:flex;gap:3px;margin-bottom:1rem;flex-wrap:wrap;}
-.cat-tab{padding:.35rem .875rem;border-radius:100px;font-size:.8rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--t2);transition:all .15s;white-space:nowrap;}
-.cat-tab:hover{border-color:#A5B4FC;color:var(--accent);}
-.cat-tab.active{background:var(--accent);color:white;border-color:var(--accent);}
-/* Filter bar */
-.fbar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;}
-.fbar input{border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.45rem .75rem .45rem 2rem;font-size:.8125rem;font-family:'Sarabun',sans-serif;outline:none;background:white;transition:border .15s;min-width:180px;flex:1;}
-.fbar input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
-.fbar-search-wrap{position:relative;flex:1;min-width:180px;}
-.fbar-search-wrap svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--t3);}
-.fbar select{border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.45rem 1.75rem .45rem .75rem;font-size:.8125rem;font-family:'Sarabun',sans-serif;outline:none;background:white;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;color:var(--t2);transition:border .15s;}
-.fbar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
-.sort-dir{border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.45rem .625rem;background:white;cursor:pointer;color:var(--t2);display:flex;align-items:center;transition:all .15s;}
-.sort-dir:hover{background:var(--bg);border-color:#CBD5E1;}
+.sc-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:1.25rem;}
+.sc{background:var(--sf);border-radius:var(--r);padding:1rem 1.125rem;box-shadow:var(--s1);display:flex;align-items:center;gap:12px;}
+.sc-i{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sc-l{font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px;}
+.sc-v{font-size:1.5rem;font-weight:700;line-height:1;}
+/* Cat tabs */
+.ctabs{display:flex;gap:3px;margin-bottom:1rem;flex-wrap:wrap;}
+.ctab{padding:.35rem .875rem;border-radius:100px;font-size:.8rem;font-weight:600;cursor:pointer;border:1.5px solid var(--bo);background:white;color:var(--t2);transition:all .15s;white-space:nowrap;}
+.ctab:hover{border-color:#A5B4FC;color:var(--ac);}
+.ctab.active{background:var(--ac);color:white;border-color:var(--ac);}
+/* Filter */
+.fb{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;}
+.fb-sw{position:relative;flex:1;min-width:180px;}
+.fb-sw svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--t3);}
+.fb input{border:1.5px solid var(--bo);border-radius:var(--rs);padding:.45rem .75rem .45rem 2rem;font-size:.8125rem;font-family:"Sarabun",sans-serif;outline:none;background:white;transition:border .15s;width:100%;}
+.fb input:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
+.fb select{border:1.5px solid var(--bo);border-radius:var(--rs);padding:.45rem 1.75rem .45rem .75rem;font-size:.8125rem;font-family:"Sarabun",sans-serif;outline:none;background:white;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;color:var(--t2);transition:border .15s;}
+.fb select:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
+.sd{border:1.5px solid var(--bo);border-radius:var(--rs);padding:.45rem .625rem;background:white;cursor:pointer;color:var(--t2);display:flex;align-items:center;transition:all .15s;}
+.sd:hover{background:var(--bg);border-color:#CBD5E1;}
 /* Card */
-.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--sh-sm);overflow:hidden;}
+.card{background:var(--sf);border-radius:var(--r);box-shadow:var(--s1);overflow:hidden;}
 /* Table */
-.tbl-wrap{overflow-x:auto;}
+.tw{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:.8125rem;}
-thead th{padding:.7rem .875rem;font-size:.67rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;text-align:left;background:#F8FAFC;border-bottom:1px solid var(--border);white-space:nowrap;}
+thead th{padding:.7rem .875rem;font-size:.67rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;text-align:left;background:#F8FAFC;border-bottom:1px solid var(--bo);white-space:nowrap;}
 tbody tr{border-bottom:1px solid #F8FAFC;transition:background .1s;}
 tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:#FAFBFF;}
 tbody tr.imp{background:#FEF2F2;}
 tbody tr.imp:hover{background:#FDE8E8;}
-tbody tr.imp td{border-bottom-color:#FECACA;}
 tbody td{padding:.75rem .875rem;color:var(--t2);vertical-align:middle;}
-.lc.imp{background:#FEF2F2;border-left:3px solid #F87171;}
 /* Badges */
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap;}
-.b-green{background:var(--green-bg);color:var(--green);}
-.b-red{background:var(--red-bg);color:var(--red);}
-.b-blue{background:var(--blue-bg);color:var(--blue);}
-.b-amber{background:var(--amber-bg);color:var(--amber);}
-.b-orange{background:var(--orange-bg);color:var(--orange);}
-.b-gray{background:var(--gray-bg);color:var(--gray);}
-.b-indigo{background:var(--accent-l);color:var(--accent);}
-.b-purple{background:var(--purple-bg);color:var(--purple);}
+.b-gr{background:var(--grb);color:var(--gr);}.b-rd{background:var(--rdb);color:var(--rd);}.b-bl{background:var(--blb);color:var(--bl);}.b-am{background:var(--amb);color:var(--am);}.b-or{background:var(--orb);color:var(--or);}.b-gy{background:var(--gyb);color:var(--gy);}.b-in{background:var(--al);color:var(--ac);}.b-pu{background:var(--pub);color:var(--pu);}
 /* Buttons */
-.btn-p{background:var(--accent);color:white;border:none;padding:.5rem 1rem;border-radius:var(--r-sm);font-size:.8125rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'Sarabun',sans-serif;transition:background .15s;white-space:nowrap;}
-.btn-p:hover{background:var(--accent-h);}
-.btn-g{background:none;border:1.5px solid var(--border);color:var(--t2);padding:.5rem .875rem;border-radius:var(--r-sm);font-size:.875rem;font-weight:500;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s;}
-.btn-g:hover{background:var(--bg);}
+.bp{background:var(--ac);color:white;border:none;padding:.5rem 1rem;border-radius:var(--rs);font-size:.8125rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:"Sarabun",sans-serif;transition:background .15s;white-space:nowrap;}
+.bp:hover{background:var(--ach);}
+.bg{background:none;border:1.5px solid var(--bo);color:var(--t2);padding:.5rem .875rem;border-radius:var(--rs);font-size:.875rem;font-weight:500;cursor:pointer;font-family:"Sarabun",sans-serif;transition:all .15s;}
+.bg:hover{background:var(--bg);}
 .ib{background:none;border:none;padding:5px;border-radius:6px;cursor:pointer;color:var(--t3);display:flex;align-items:center;transition:all .15s;}
-.ib.ed:hover{background:var(--accent-l);color:var(--accent);}
-.ib.dl:hover{background:var(--red-bg);color:var(--red);}
-/* Image upload */
-.img-drop{border:2px dashed var(--border);border-radius:var(--r-sm);padding:1.25rem 1rem;text-align:center;cursor:pointer;transition:all .2s;background:#FAFBFC;user-select:none;}
-.img-drop:hover{border-color:var(--accent);background:var(--accent-l);}
-.img-drop svg{margin:0 auto 6px;}
-.img-prev-wrap{position:relative;width:100%;text-align:center;}
-.img-prev{max-width:100%;max-height:200px;object-fit:contain;border-radius:var(--r-sm);border:1.5px solid var(--border);display:block;margin:0 auto;}
-.img-rm{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.55);color:white;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;}
-.img-rm:hover{background:rgba(0,0,0,.8);}
-.eq-thumb{width:44px;height:44px;object-fit:cover;border-radius:7px;cursor:pointer;transition:opacity .15s;display:block;}
-.eq-thumb:hover{opacity:.82;}
-.thumb-ph{width:44px;height:44px;border-radius:7px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;color:#CBD5E1;}
-.ms-thumb{width:30px;height:30px;object-fit:cover;border-radius:5px;flex-shrink:0;}
-.ms-thumb-ph{width:30px;height:30px;border-radius:5px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;color:#CBD5E1;flex-shrink:0;}
-/* Lightbox */
-.lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;}
-.lb.open{display:flex;}
-.lb img{max-width:88vw;max-height:88vh;object-fit:contain;border-radius:var(--r);box-shadow:0 24px 80px rgba(0,0,0,.6);}
-.lb-close{position:fixed;top:.875rem;right:.875rem;background:rgba(255,255,255,.15);border:none;color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
-.lb-close:hover{background:rgba(255,255,255,.3);}
+.ib.ed:hover{background:var(--al);color:var(--ac);}
+.ib.dl:hover{background:var(--rdb);color:var(--rd);}
+/* Image */
+.img-drop{border:2px dashed var(--bo);border-radius:var(--rs);padding:1.25rem 1rem;text-align:center;cursor:pointer;transition:all .2s;background:#FAFBFC;user-select:none;}
+.img-drop:hover{border-color:var(--ac);background:var(--al);}
+.img-pw{position:relative;width:100%;text-align:center;}
+.img-pr{max-width:100%;max-height:200px;object-fit:contain;border-radius:var(--rs);border:1.5px solid var(--bo);display:block;margin:0 auto;}
+.img-rm{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.55);color:white;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.eq-th{width:44px;height:44px;object-fit:cover;border-radius:7px;cursor:pointer;transition:opacity .15s;display:block;}
+.eq-th:hover{opacity:.82;}
+.th-ph{width:44px;height:44px;border-radius:7px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;color:#CBD5E1;}
+.ms-th{width:30px;height:30px;object-fit:cover;border-radius:5px;flex-shrink:0;}
 /* View toggle */
-.vt{display:flex;gap:3px;background:#EEF0F3;padding:3px;border-radius:var(--r-sm);width:fit-content;margin-bottom:1rem;}
-.vb{background:none;border:none;padding:.35rem .8rem;border-radius:6px;font-size:.8rem;font-weight:500;cursor:pointer;color:var(--t2);display:flex;align-items:center;gap:4px;font-family:'Sarabun',sans-serif;transition:all .15s;}
-.vb.active{background:white;color:var(--accent);box-shadow:var(--sh-sm);font-weight:700;}
+.vt{display:flex;gap:3px;background:#EEF0F3;padding:3px;border-radius:var(--rs);width:fit-content;margin-bottom:1rem;}
+.vb{background:none;border:none;padding:.35rem .8rem;border-radius:6px;font-size:.8rem;font-weight:500;cursor:pointer;color:var(--t2);display:flex;align-items:center;gap:4px;font-family:"Sarabun",sans-serif;transition:all .15s;}
+.vb.active{background:white;color:var(--ac);box-shadow:var(--s1);font-weight:700;}
 /* Calendar */
-.cal-cell{min-height:86px;padding:4px;border-right:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9;}
-.cal-cell:nth-child(7n){border-right:none;}
-.cal-cell.other{background:#FAFAFA;}
-.cal-cell.today{background:#FFFBFF;}
-.cal-date{font-size:.68rem;font-weight:600;color:var(--t2);margin-bottom:2px;display:inline-block;padding:1px 3px;}
-.cal-cell.today .cal-date{background:var(--accent);color:white;border-radius:50%;width:21px;height:21px;display:flex;align-items:center;justify-content:center;}
-.cal-cell.other .cal-date{color:#CBD5E1;}
-.cal-evt{font-size:10px;padding:1px 5px;border-radius:3px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;font-weight:500;}
+.cal-c{min-height:86px;padding:4px;border-right:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9;}
+.cal-c:nth-child(7n){border-right:none;}
+.cal-c.oth{background:#FAFAFA;}.cal-c.tod{background:#FFFBFF;}
+.cal-d{font-size:.68rem;font-weight:600;color:var(--t2);margin-bottom:2px;display:inline-block;padding:1px 3px;}
+.cal-c.tod .cal-d{background:var(--ac);color:white;border-radius:50%;width:21px;height:21px;display:flex;align-items:center;justify-content:center;}
+.cal-c.oth .cal-d{color:#CBD5E1;}
+.cal-ev{font-size:10px;padding:1px 5px;border-radius:3px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;font-weight:500;}
 /* List card */
-.lc{background:white;border-radius:var(--r);box-shadow:var(--sh-sm);padding:1rem 1.125rem;margin-bottom:10px;}
-.lc-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:.625rem;}
-.lc-meta label{font-size:.67rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:2px;}
-.lc-meta span{font-size:.8rem;color:var(--t2);}
+.lc{background:white;border-radius:var(--r);box-shadow:var(--s1);padding:1rem 1.125rem;margin-bottom:10px;}
+.lc.imp{background:#FEF2F2;border-left:3px solid #F87171;}
+.lc-m{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:.625rem;}
+.lc-m label{font-size:.67rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:2px;}
+.lc-m span{font-size:.8rem;color:var(--t2);}
 /* Multi-select */
-.ms-wrap{position:relative;}
-.ms-btn{display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.5rem .75rem;cursor:pointer;background:white;transition:border .15s;min-height:38px;}
-.ms-btn:hover{border-color:#A5B4FC;}
-.ms-btn.open{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
-.ms-panel{border:1.5px solid var(--accent);border-radius:var(--r-sm);background:white;box-shadow:0 8px 24px rgba(0,0,0,.12);margin-top:4px;overflow:hidden;z-index:10;position:relative;}
-.ms-panel input{width:100%;border:none;border-bottom:1px solid var(--border);padding:8px 10px;font-size:.8125rem;outline:none;font-family:'Sarabun',sans-serif;}
-.ms-list{max-height:170px;overflow-y:auto;}
-.ms-item{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;transition:background .1s;font-size:.8125rem;}
-.ms-item:hover{background:var(--accent-l);}
-.ms-item input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;flex-shrink:0;cursor:pointer;}
-.ms-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;min-height:4px;}
-.ms-tag{display:flex;align-items:center;gap:3px;background:var(--accent-l);color:var(--accent);padding:3px 8px;border-radius:100px;font-size:11px;font-weight:600;}
-.ms-tag button{background:none;border:none;cursor:pointer;color:var(--accent);line-height:1;padding:0;font-size:13px;opacity:.7;display:flex;align-items:center;}
-.ms-tag button:hover{opacity:1;}
+.ms-w{position:relative;}
+.ms-b{display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--bo);border-radius:var(--rs);padding:.5rem .75rem;cursor:pointer;background:white;transition:border .15s;min-height:38px;}
+.ms-b:hover{border-color:#A5B4FC;}
+.ms-b.open{border-color:var(--ac);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
+.ms-p{border:1.5px solid var(--ac);border-radius:var(--rs);background:white;box-shadow:0 8px 24px rgba(0,0,0,.12);margin-top:4px;overflow:hidden;z-index:10;position:relative;}
+.ms-p input{width:100%;border:none;border-bottom:1px solid var(--bo);padding:8px 10px;font-size:.8125rem;outline:none;font-family:"Sarabun",sans-serif;}
+.ms-l{max-height:170px;overflow-y:auto;}
+.ms-it{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;transition:background .1s;font-size:.8125rem;}
+.ms-it:hover{background:var(--al);}
+.ms-it input[type=checkbox]{accent-color:var(--ac);width:14px;height:14px;flex-shrink:0;cursor:pointer;}
+.ms-tg{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.ms-tag{display:flex;align-items:center;gap:3px;background:var(--al);color:var(--ac);padding:3px 8px;border-radius:100px;font-size:11px;font-weight:600;}
+.ms-tag button{background:none;border:none;cursor:pointer;color:var(--ac);line-height:1;padding:0;font-size:13px;opacity:.7;display:flex;align-items:center;}
 /* Modal */
 .mo{display:none;position:fixed;inset:0;background:rgba(15,23,42,.65);backdrop-filter:blur(3px);z-index:50;overflow-y:auto;padding:1.75rem 1rem;align-items:flex-start;justify-content:center;}
 .mo.open{display:flex;}
-.mb{background:white;border-radius:16px;width:100%;box-shadow:var(--sh-lg);}
-.mh{display:flex;align-items:center;justify-content:space-between;padding:1.125rem 1.25rem;border-bottom:1px solid var(--border);}
-.mt{font-size:.9375rem;font-weight:700;color:var(--text);}
+.mb{background:white;border-radius:16px;width:100%;box-shadow:var(--sl);}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:1.125rem 1.25rem;border-bottom:1px solid var(--bo);}
+.mt{font-size:.9375rem;font-weight:700;color:var(--tx);}
 .mc{background:none;border:none;cursor:pointer;padding:4px;color:var(--t3);border-radius:6px;display:flex;align-items:center;transition:all .15s;}
 .mc:hover{background:var(--bg);color:var(--t2);}
 .mbody{padding:1.25rem;display:flex;flex-direction:column;gap:13px;}
-.mscroll{overflow-y:auto;max-height:68vh;}
-.mfoot{display:flex;gap:10px;padding:1rem 1.25rem;border-top:1px solid var(--border);}
+.msc{overflow-y:auto;max-height:68vh;}
+.mf{display:flex;gap:10px;padding:1rem 1.25rem;border-top:1px solid var(--bo);}
 /* Form */
 .fl{display:block;font-size:.75rem;font-weight:600;color:var(--t2);margin-bottom:5px;}
 .fl .opt{font-weight:400;color:var(--t3);}
-.fl .req{color:var(--red);}
+.fl .req{color:var(--rd);}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;}
-input[type=text],input[type=tel],input[type=date],input[type=time],input[type=number],select,textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.48rem .75rem;font-size:.875rem;font-family:'Sarabun',sans-serif;color:var(--text);outline:none;transition:border .15s,box-shadow .15s;background:white;}
-input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.12);}
+input[type=text],input[type=tel],input[type=date],input[type=time],input[type=number],select,textarea{width:100%;border:1.5px solid var(--bo);border-radius:var(--rs);padding:.48rem .75rem;font-size:.875rem;font-family:"Sarabun",sans-serif;color:var(--tx);outline:none;transition:border .15s,box-shadow .15s;background:white;}
+input:focus,select:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(99,102,241,.12);}
 select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px;cursor:pointer;}
 textarea{resize:none;}
 /* Empty */
 .es{padding:3.5rem 1rem;text-align:center;}
-.es-ico{width:52px;height:52px;margin:0 auto 10px;color:#CBD5E1;}
+.es-i{width:52px;height:52px;margin:0 auto 10px;color:#CBD5E1;}
 .es-t{font-size:.9rem;font-weight:600;color:var(--t2);margin-bottom:3px;}
 .es-s{font-size:.78rem;color:var(--t3);}
-/* Alert */
-.alert-w{background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:var(--r-sm);padding:9px 12px;font-size:.8rem;color:#92400E;font-weight:500;}
+.aw{background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:var(--rs);padding:9px 12px;font-size:.8rem;color:#92400E;font-weight:500;}
+/* Lightbox */
+.lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;}
+.lb.open{display:flex;}
+.lb img{max-width:88vw;max-height:88vh;object-fit:contain;border-radius:var(--r);box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.lb-x{position:fixed;top:.875rem;right:.875rem;background:rgba(255,255,255,.15);border:none;color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 /* Toast */
 #toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;transition:all .35s cubic-bezier(.175,.885,.32,1.275);transform:translateY(80px);opacity:0;pointer-events:none;}
-.ti{background:#1E293B;color:white;padding:11px 15px;border-radius:10px;font-size:.875rem;display:flex;align-items:center;gap:7px;box-shadow:0 8px 30px rgba(0,0,0,.2);}
+.ti{color:white;padding:11px 15px;border-radius:10px;font-size:.875rem;display:flex;align-items:center;gap:7px;box-shadow:0 8px 30px rgba(0,0,0,.2);}
 ::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:10px;}
 </style>
 </head>
 <body>
 
+<!-- Loader -->
+<div id="app-loader">
+  <div class="spinner"></div>
+  <div class="loader-txt">กำลังโหลดข้อมูลจาก Database...</div>
+</div>
+
 <!-- Sidebar -->
-<aside class="sidebar">
-  <div class="s-logo">
-    <div class="s-icon"><svg width="19" height="19" fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></div>
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="sb-ic"><svg width="19" height="19" fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></div>
     <div><div style="font-size:.875rem;font-weight:700;color:#F8FAFC;">Studio Manager</div><div style="font-size:.67rem;color:#64748B;">ระบบจัดการการเช่าอุปกรณ์</div></div>
   </div>
-  <nav class="s-nav">
-    <button class="ni active" id="nav-eq" onclick="setSection('eq')">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>คลังอุปกรณ์
-    </button>
-    <button class="ni" id="nav-rental" onclick="setSection('rental')">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>รายการยืม / เช่า
-    </button>
-    <button class="ni" id="nav-hist" onclick="setSection('hist')">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>ประวัติการทำรายการ
-    </button>
+  <nav class="sb-nav">
+    <button class="ni active" id="nav-eq" onclick="setSection('eq')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>คลังอุปกรณ์</button>
+    <button class="ni" id="nav-rental" onclick="setSection('rental')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>รายการยืม / เช่า</button>
+    <button class="ni" id="nav-hist" onclick="setSection('hist')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>ประวัติการทำรายการ</button>
   </nav>
-  <div class="s-stats">
+  <div class="sb-st">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:.75rem;">
+      <div class="conn-dot conn-wait" id="conn-dot"></div>
+      <span style="font-size:.7rem;color:#64748B;" id="conn-txt">กำลังเชื่อมต่อ...</span>
+    </div>
     <div style="font-size:.63rem;color:#475569;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:.625rem;">ภาพรวม</div>
     <div style="display:flex;flex-direction:column;gap:.45rem;">
-      <div style="display:flex;justify-content:space-between;"><span style="font-size:.73rem;color:#64748B;">ทั้งหมด</span><span style="font-size:.8rem;font-weight:700;color:#F8FAFC;" id="ss-total">0</span></div>
-      <div style="display:flex;justify-content:space-between;"><span style="font-size:.73rem;color:#64748B;">ว่าง</span><span style="font-size:.8rem;font-weight:700;color:#34D399;" id="ss-avail">0</span></div>
-      <div style="display:flex;justify-content:space-between;"><span style="font-size:.73rem;color:#64748B;">ไม่ว่าง</span><span style="font-size:.8rem;font-weight:700;color:#F87171;" id="ss-busy">0</span></div>
-      <div style="display:flex;justify-content:space-between;"><span style="font-size:.73rem;color:#64748B;">จำหน่าย</span><span style="font-size:.8rem;font-weight:700;color:#94A3B8;" id="ss-sold">0</span></div>
-      <div style="display:flex;justify-content:space-between;"><span style="font-size:.73rem;color:#64748B;">เช่าแอคทีฟ</span><span style="font-size:.8rem;font-weight:700;color:#A5B4FC;" id="ss-rt">0</span></div>
+      <div style="display:flex;justify-content:space-between;"><span style="font-size:.73rem;color:#64748B;">ทั้งหมด</span><span style="font-size:.8rem;font-weight:700;color:#F8FAFC;" id="ss-t">0</span></div>
+      <div style="display:flex;justify-content:space-between;"><span style="font-size:.73rem;color:#64748B;">ว่าง</span><span style="font-size:.8rem;font-weight:700;color:#34D399;" id="ss-a">0</span></div>
+      <div style="display:flex;justify-content:space-between;"><span style="font-size:.73rem;color:#64748B;">ไม่ว่าง</span><span style="font-size:.8rem;font-weight:700;color:#F87171;" id="ss-b">0</span></div>
+      <div style="display:flex;justify-content:space-between;"><span style="font-size:.73rem;color:#64748B;">จำหน่าย</span><span style="font-size:.8rem;font-weight:700;color:#94A3B8;" id="ss-s">0</span></div>
+      <div style="display:flex;justify-content:space-between;"><span style="font-size:.73rem;color:#64748B;">เช่าแอคทีฟ</span><span style="font-size:.8rem;font-weight:700;color:#A5B4FC;" id="ss-r">0</span></div>
     </div>
   </div>
 </aside>
 
 <main>
-
-<!-- ═══ Section 1: Equipment ═══ -->
-<div id="section-eq" class="section active">
+<!-- S1: Equipment -->
+<div id="section-eq" class="sec active">
   <div class="ph">
-    <div><div class="pt">คลังอุปกรณ์</div><div class="ps">จัดการและติดตามสถานะอุปกรณ์และชุดทั้งหมดในคลัง</div></div>
-    <button class="btn-p" onclick="openEqModal()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>เพิ่มรายการ</button>
+    <div><div class="pt">คลังอุปกรณ์</div><div class="ps">จัดการและติดตามสถานะอุปกรณ์ทั้งหมด</div></div>
+    <button class="bp" onclick="openEqM()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>เพิ่มรายการ</button>
   </div>
-  <!-- Stat cards -->
-  <div class="sc-grid">
-    <div class="sc"><div class="sc-ico" style="background:#EEF2FF;"><svg width="21" height="21" fill="none" stroke="#6366F1" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div><div><div class="sc-lbl">ทั้งหมด</div><div class="sc-val" style="color:#6366F1;" id="dc-total">0</div></div></div>
-    <div class="sc"><div class="sc-ico" style="background:#ECFDF5;"><svg width="21" height="21" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><div class="sc-lbl">ว่าง</div><div class="sc-val" style="color:#059669;" id="dc-avail">0</div></div></div>
-    <div class="sc"><div class="sc-ico" style="background:#FEF2F2;"><svg width="21" height="21" fill="none" stroke="#DC2626" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><div class="sc-lbl">ไม่ว่าง</div><div class="sc-val" style="color:#DC2626;" id="dc-busy">0</div></div></div>
-    <div class="sc"><div class="sc-ico" style="background:#F1F5F9;"><svg width="21" height="21" fill="none" stroke="#64748B" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></div><div><div class="sc-lbl">จำหน่าย</div><div class="sc-val" style="color:#64748B;" id="dc-sold">0</div></div></div>
-    <div class="sc"><div class="sc-ico" style="background:#FFFBEB;"><svg width="21" height="21" fill="none" stroke="#D97706" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div><div><div class="sc-lbl">เช่าแอคทีฟ</div><div class="sc-val" style="color:#D97706;" id="dc-rt">0</div></div></div>
+  <div class="sc-g">
+    <div class="sc"><div class="sc-i" style="background:#EEF2FF;"><svg width="21" height="21" fill="none" stroke="#6366F1" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div><div><div class="sc-l">ทั้งหมด</div><div class="sc-v" style="color:#6366F1;" id="dc-t">0</div></div></div>
+    <div class="sc"><div class="sc-i" style="background:#ECFDF5;"><svg width="21" height="21" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><div class="sc-l">ว่าง</div><div class="sc-v" style="color:#059669;" id="dc-a">0</div></div></div>
+    <div class="sc"><div class="sc-i" style="background:#FEF2F2;"><svg width="21" height="21" fill="none" stroke="#DC2626" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><div class="sc-l">ไม่ว่าง</div><div class="sc-v" style="color:#DC2626;" id="dc-b">0</div></div></div>
+    <div class="sc"><div class="sc-i" style="background:#F1F5F9;"><svg width="21" height="21" fill="none" stroke="#64748B" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></div><div><div class="sc-l">จำหน่าย</div><div class="sc-v" style="color:#64748B;" id="dc-s">0</div></div></div>
+    <div class="sc"><div class="sc-i" style="background:#FFFBEB;"><svg width="21" height="21" fill="none" stroke="#D97706" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div><div><div class="sc-l">เช่าแอคทีฟ</div><div class="sc-v" style="color:#D97706;" id="dc-r">0</div></div></div>
   </div>
-  <!-- Category tabs -->
-  <div class="cat-tabs" id="cat-tabs">
-    <button class="cat-tab active" onclick="setCatFilter('all',this)">ทั้งหมด <span id="ct-all"></span></button>
-    <button class="cat-tab" onclick="setCatFilter('อุปกรณ์',this)">🎬 อุปกรณ์ <span id="ct-eq"></span></button>
-    <button class="cat-tab" onclick="setCatFilter('ชุด',this)">👗 ชุด <span id="ct-set"></span></button>
-    <button class="cat-tab" onclick="setCatFilter('อื่นๆ',this)">📦 อื่นๆ <span id="ct-other"></span></button>
+  <div class="ctabs" id="ctabs">
+    <button class="ctab active" onclick="setCat('all',this)">ทั้งหมด <span id="ct-all"></span></button>
+    <button class="ctab" onclick="setCat('อุปกรณ์',this)">🎬 อุปกรณ์ <span id="ct-eq"></span></button>
+    <button class="ctab" onclick="setCat('ชุด',this)">👗 ชุด <span id="ct-set"></span></button>
+    <button class="ctab" onclick="setCat('อื่นๆ',this)">📦 อื่นๆ <span id="ct-oth"></span></button>
   </div>
-  <!-- Filter bar -->
-  <div class="fbar">
-    <div class="fbar-search-wrap">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" id="eq-search" placeholder="ค้นหาชื่ออุปกรณ์..." oninput="renderEq()">
-    </div>
-    <select id="eq-f-status" onchange="renderEq()">
-      <option value="all">สถานะทั้งหมด</option>
-      <option value="ว่าง">ว่าง</option><option value="ไม่ว่าง">ไม่ว่าง</option><option value="จำหน่าย">จำหน่าย</option>
-    </select>
-    <select id="eq-sort" onchange="renderEq()">
-      <option value="name">เรียงตาม: ชื่อ</option>
-      <option value="cat">เรียงตาม: หมวดหมู่</option>
-      <option value="status">เรียงตาม: สถานะ</option>
-      <option value="date">เรียงตาม: วันที่เพิ่ม</option>
-    </select>
-    <button class="sort-dir" id="eq-dir" onclick="toggleEqDir()" title="สลับทิศทาง">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" id="eq-dir-ico"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-    </button>
+  <div class="fb">
+    <div class="fb-sw"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg><input type="text" id="eq-s" placeholder="ค้นหาชื่ออุปกรณ์..." oninput="renderEq()"></div>
+    <select id="eq-fs" onchange="renderEq()"><option value="all">สถานะทั้งหมด</option><option value="ว่าง">ว่าง</option><option value="ไม่ว่าง">ไม่ว่าง</option><option value="จำหน่าย">จำหน่าย</option></select>
+    <select id="eq-so" onchange="renderEq()"><option value="name">เรียงตาม: ชื่อ</option><option value="cat">เรียงตาม: หมวดหมู่</option><option value="status">เรียงตาม: สถานะ</option><option value="date">เรียงตาม: วันที่เพิ่ม</option></select>
+    <button class="sd" id="eq-dir" onclick="tEqDir()" title="สลับทิศทาง"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" id="eq-di"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg></button>
   </div>
-  <div class="card">
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th>#</th><th>รูป</th><th>ชื่อ</th><th>รุ่น</th><th>หมวดหมู่</th><th>สภาพ</th><th>ตำหนิ</th><th>วันที่เพิ่ม</th><th>สถานะ</th><th style="text-align:right;">จัดการ</th>
-        </tr></thead>
-        <tbody id="eq-tbody"></tbody>
-      </table>
-    </div>
-    <div id="eq-empty" class="es" style="display:none;">
-      <svg class="es-ico" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-      <div class="es-t">ไม่พบรายการ</div><div class="es-s">ลองเปลี่ยนตัวกรอง หรือเพิ่มอุปกรณ์ใหม่</div>
-    </div>
-  </div>
+  <div class="card"><div class="tw"><table>
+    <thead><tr><th>#</th><th>รูป</th><th>ชื่อ</th><th>รุ่น</th><th>หมวดหมู่</th><th>สภาพ</th><th>ตำหนิ</th><th>วันที่เพิ่ม</th><th>สถานะ</th><th style="text-align:right;">จัดการ</th></tr></thead>
+    <tbody id="eq-tb"></tbody>
+  </table></div>
+  <div id="eq-em" class="es" style="display:none;"><svg class="es-i" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg><div class="es-t">ไม่พบรายการ</div><div class="es-s">ลองเปลี่ยนตัวกรองหรือเพิ่มอุปกรณ์ใหม่</div></div></div>
 </div>
 
-<!-- ═══ Section 2: Rentals ═══ -->
-<div id="section-rental" class="section">
+<!-- S2: Rentals -->
+<div id="section-rental" class="sec">
   <div class="ph">
     <div><div class="pt">รายการยืม / เช่า</div><div class="ps">ติดตามและจัดการรายการที่กำลังดำเนินการ</div></div>
-    <button class="btn-p" onclick="openRentalModal()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>เพิ่มรายการ</button>
+    <button class="bp" onclick="openRtM()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>เพิ่มรายการ</button>
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;">
-    <div class="vt">
-      <button class="vb active" id="vb-table" onclick="setView('table')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M3 6h18M3 18h18"/></svg>ตาราง</button>
-      <button class="vb" id="vb-cal" onclick="setView('cal')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>ปฏิทิน</button>
-      <button class="vb" id="vb-list" onclick="setView('list')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>รายการ</button>
+    <div class="vt"><button class="vb active" id="vb-table" onclick="setView('table')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M3 6h18M3 18h18"/></svg>ตาราง</button><button class="vb" id="vb-cal" onclick="setView('cal')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>ปฏิทิน</button><button class="vb" id="vb-list" onclick="setView('list')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>รายการ</button></div>
+  </div>
+  <div class="fb">
+    <div class="fb-sw"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg><input type="text" id="rt-s" placeholder="ค้นหาชื่อผู้เช่า..." oninput="renderRentals()"></div>
+    <select id="rt-fs" onchange="renderRentals()"><option value="all">สถานะทั้งหมด</option><option value="นัดแล้ว">นัดแล้ว</option><option value="รอส่งของ">รอส่งของ</option><option value="ส่งของแล้ว">ส่งของแล้ว</option></select>
+    <select id="rt-fp" onchange="renderRentals()"><option value="all">ความสำคัญทั้งหมด</option><option value="สำคัญ">🔴 สำคัญ</option><option value="ปกติ">ปกติ</option></select>
+    <select id="rt-so" onchange="renderRentals()"><option value="date">เรียงตาม: วันที่เริ่ม</option><option value="renter">เรียงตาม: ผู้เช่า</option><option value="status">เรียงตาม: สถานะ</option><option value="pri">เรียงตาม: ความสำคัญ</option></select>
+    <button class="sd" id="rt-dir" onclick="tRtDir()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" id="rt-di"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg></button>
+  </div>
+  <div id="view-table"><div class="card"><div class="tw"><table><thead><tr><th>ผู้เช่า</th><th>อุปกรณ์</th><th>วันที่เริ่ม</th><th>วันที่สิ้นสุด</th><th>ผู้ติดต่อ</th><th>ความสำคัญ</th><th>สถานะ</th><th style="text-align:right;">จัดการ</th></tr></thead><tbody id="rt-tb"></tbody></table></div><div id="rt-em" class="es" style="display:none;"><svg class="es-i" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg><div class="es-t">ไม่พบรายการ</div></div></div></div>
+  <div id="view-cal" style="display:none;"><div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.875rem 1rem;border-bottom:1px solid var(--bo);">
+      <button class="sd" onclick="prevM()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></button>
+      <div style="font-size:.9375rem;font-weight:700;color:var(--tx);" id="cal-tt"></div>
+      <button class="sd" onclick="nextM()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
     </div>
-  </div>
-  <!-- Filter bar -->
-  <div class="fbar">
-    <div class="fbar-search-wrap">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" id="rt-search" placeholder="ค้นหาชื่อผู้เช่า..." oninput="renderRentals()">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#F8FAFC;border-bottom:1px solid var(--bo);">
+      <div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">อา</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">จ</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">อ</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">พ</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">พฤ</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">ศ</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">ส</div>
     </div>
-    <select id="rt-f-status" onchange="renderRentals()">
-      <option value="all">สถานะทั้งหมด</option>
-      <option value="นัดแล้ว">นัดแล้ว</option><option value="รอส่งของ">รอส่งของ</option><option value="ส่งของแล้ว">ส่งของแล้ว</option>
-    </select>
-    <select id="rt-f-pri" onchange="renderRentals()">
-      <option value="all">ความสำคัญทั้งหมด</option>
-      <option value="สำคัญ">🔴 สำคัญ</option><option value="ปกติ">ปกติ</option>
-    </select>
-    <select id="rt-sort" onchange="renderRentals()">
-      <option value="date">เรียงตาม: วันที่เริ่ม</option>
-      <option value="renter">เรียงตาม: ผู้เช่า</option>
-      <option value="status">เรียงตาม: สถานะ</option>
-      <option value="priority">เรียงตาม: ความสำคัญ</option>
-    </select>
-    <button class="sort-dir" id="rt-dir" onclick="toggleRtDir()">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" id="rt-dir-ico"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-    </button>
-  </div>
-  <!-- Table view -->
-  <div id="view-table">
-    <div class="card"><div class="tbl-wrap"><table>
-      <thead><tr><th>ผู้เช่า</th><th>อุปกรณ์</th><th>วันที่เริ่ม</th><th>วันที่สิ้นสุด</th><th>ผู้ติดต่อ</th><th>ความสำคัญ</th><th>สถานะ</th><th style="text-align:right;">จัดการ</th></tr></thead>
-      <tbody id="rt-tbody"></tbody>
-    </table></div>
-    <div id="rt-empty" class="es" style="display:none;"><svg class="es-ico" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg><div class="es-t">ไม่พบรายการ</div><div class="es-s">ลองเปลี่ยนตัวกรองหรือเพิ่มรายการใหม่</div></div>
-    </div>
-  </div>
-  <!-- Calendar view -->
-  <div id="view-cal" style="display:none;">
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:.875rem 1rem;border-bottom:1px solid var(--border);">
-        <button class="sort-dir" onclick="prevMonth()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></button>
-        <div style="font-size:.9375rem;font-weight:700;color:var(--text);" id="cal-title"></div>
-        <button class="sort-dir" onclick="nextMonth()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#F8FAFC;border-bottom:1px solid var(--border);">
-        <div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">อา</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">จ</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">อ</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">พ</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">พฤ</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">ศ</div><div style="padding:7px 4px;text-align:center;font-size:.67rem;font-weight:700;color:var(--t3);">ส</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);" id="cal-grid"></div>
-      <div style="padding:9px 12px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-        <span style="font-size:.68rem;color:var(--t3);font-weight:700;">สถานะ:</span>
-        <span class="badge b-blue">นัดแล้ว</span><span class="badge b-amber">รอส่งของ</span><span class="badge b-orange">ส่งของแล้ว</span>
-      </div>
-    </div>
-  </div>
-  <!-- List view -->
-  <div id="view-list" style="display:none;">
-    <div id="list-ct"></div>
-    <div id="list-empty" class="card es" style="display:none;"><svg class="es-ico" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg><div class="es-t">ไม่พบรายการ</div></div>
-  </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);" id="cal-grid"></div>
+    <div style="padding:9px 12px;border-top:1px solid var(--bo);display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span style="font-size:.68rem;color:var(--t3);font-weight:700;">สถานะ:</span><span class="badge b-bl">นัดแล้ว</span><span class="badge b-am">รอส่งของ</span><span class="badge b-or">ส่งของแล้ว</span></div>
+  </div></div>
+  <div id="view-list" style="display:none;"><div id="list-ct"></div><div id="list-em" class="card es" style="display:none;"><svg class="es-i" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg><div class="es-t">ไม่พบรายการ</div></div></div>
 </div>
 
-<!-- ═══ Section 3: History ═══ -->
-<div id="section-hist" class="section">
+<!-- S3: History -->
+<div id="section-hist" class="sec">
   <div class="ph"><div><div class="pt">ประวัติการทำรายการ</div><div class="ps">รายการที่เสร็จสิ้นหรือยกเลิกแล้ว</div></div></div>
-  <!-- Filter bar -->
-  <div class="fbar">
-    <div class="fbar-search-wrap">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" id="hi-search" placeholder="ค้นหาชื่อผู้เช่า..." oninput="renderHist()">
-    </div>
-    <select id="hi-f-status" onchange="renderHist()">
-      <option value="all">สถานะทั้งหมด</option>
-      <option value="เสร็จสิ้น">เสร็จสิ้น</option><option value="ยกเลิก">ยกเลิก</option>
-    </select>
-    <select id="hi-sort" onchange="renderHist()">
-      <option value="date">เรียงตาม: วันที่เริ่ม</option>
-      <option value="renter">เรียงตาม: ผู้เช่า</option>
-      <option value="status">เรียงตาม: สถานะ</option>
-    </select>
-    <button class="sort-dir" id="hi-dir" onclick="toggleHiDir()">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" id="hi-dir-ico"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-    </button>
+  <div class="fb">
+    <div class="fb-sw"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg><input type="text" id="hi-s" placeholder="ค้นหาชื่อผู้เช่า..." oninput="renderHist()"></div>
+    <select id="hi-fs" onchange="renderHist()"><option value="all">สถานะทั้งหมด</option><option value="เสร็จสิ้น">เสร็จสิ้น</option><option value="ยกเลิก">ยกเลิก</option></select>
+    <select id="hi-so" onchange="renderHist()"><option value="date">เรียงตาม: วันที่เริ่ม</option><option value="renter">เรียงตาม: ผู้เช่า</option><option value="status">เรียงตาม: สถานะ</option></select>
+    <button class="sd" id="hi-dir" onclick="tHiDir()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" id="hi-di"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg></button>
   </div>
-  <div class="card"><div class="tbl-wrap"><table>
-    <thead><tr><th>ผู้เช่า</th><th>อุปกรณ์</th><th>วันที่เริ่ม</th><th>วันที่สิ้นสุด</th><th>ผู้ติดต่อ</th><th>ความสำคัญ</th><th>สถานะ</th><th style="text-align:right;">จัดการ</th></tr></thead>
-    <tbody id="hi-tbody"></tbody>
-  </table></div>
-  <div id="hi-empty" class="es" style="display:none;"><svg class="es-ico" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><div class="es-t">ยังไม่มีประวัติ</div><div class="es-s">รายการเสร็จสิ้น/ยกเลิกจะแสดงที่นี่</div></div>
-  </div>
+  <div class="card"><div class="tw"><table><thead><tr><th>ผู้เช่า</th><th>อุปกรณ์</th><th>วันที่เริ่ม</th><th>วันที่สิ้นสุด</th><th>ผู้ติดต่อ</th><th>ความสำคัญ</th><th>สถานะ</th><th style="text-align:right;">จัดการ</th></tr></thead><tbody id="hi-tb"></tbody></table></div>
+  <div id="hi-em" class="es" style="display:none;"><svg class="es-i" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><div class="es-t">ยังไม่มีประวัติ</div><div class="es-s">รายการเสร็จสิ้น/ยกเลิกจะแสดงที่นี่</div></div></div>
 </div>
-
 </main>
 
-<!-- ════ MODAL: Equipment ════ -->
-<div class="mo" id="eq-modal" onclick="if(event.target===this)closeEqModal()">
+<!-- MODAL: Equipment -->
+<div class="mo" id="eq-modal" onclick="if(event.target===this)closeEqM()">
   <div class="mb" style="max-width:520px;">
-    <div class="mh"><div class="mt" id="eq-mt">เพิ่มรายการ</div><button class="mc" onclick="closeEqModal()"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+    <div class="mh"><div class="mt" id="eq-mt">เพิ่มรายการ</div><button class="mc" onclick="closeEqM()"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
     <div class="mbody">
       <input type="hidden" id="eq-id">
-      <div class="fg2">
-        <div><label class="fl">ชื่อ <span class="req">*</span></label><input type="text" id="eq-name" placeholder="เช่น กล้อง Sony A7III"></div>
-        <div><label class="fl">รุ่น <span class="opt">(ไม่บังคับ)</span></label><input type="text" id="eq-model" placeholder="เช่น A7III"></div>
-      </div>
+      <div class="fg2"><div><label class="fl">ชื่อ <span class="req">*</span></label><input type="text" id="eq-name" placeholder="เช่น กล้อง Sony A7III"></div><div><label class="fl">รุ่น <span class="opt">(ไม่บังคับ)</span></label><input type="text" id="eq-model" placeholder="เช่น A7III"></div></div>
       <div class="fg3">
         <div><label class="fl">หมวดหมู่ <span class="req">*</span></label><select id="eq-cat"><option value="อุปกรณ์">🎬 อุปกรณ์</option><option value="ชุด">👗 ชุด</option><option value="อื่นๆ">📦 อื่นๆ</option></select></div>
         <div><label class="fl">สภาพ <span class="req">*</span></label><select id="eq-cond"><option value="">— เลือก —</option><option>ใหม่</option><option>ดีมาก</option><option>ดี</option><option>พอใช้</option><option>ต้องซ่อม</option></select></div>
         <div><label class="fl">วันที่เพิ่ม</label><input type="date" id="eq-date"></div>
       </div>
-      <div><label class="fl">ตำหนิ <span class="opt">(ไม่บังคับ)</span></label><textarea id="eq-defects" rows="2" placeholder="ระบุตำหนิ ถ้ามี..."></textarea></div>
-      <div id="eq-qty-row">
-        <label class="fl">จำนวน <span class="req">*</span></label>
-        <input type="number" id="eq-qty" value="1" min="1" max="99">
-        <div style="font-size:.7rem;color:var(--t3);margin-top:4px;">หากใส่มากกว่า 1 จะสร้างเป็นรายการแยกแต่ละชิ้น</div>
-      </div>
-      <div><label class="fl">สถานะ</label><select id="eq-status"><option value="ว่าง">✅ ว่าง</option><option value="ไม่ว่าง">🔴 ไม่ว่าง</option><option value="จำหน่าย">⬜ จำหน่าย</option></select></div>
-      <!-- Image upload -->
+      <div><label class="fl">ตำหนิ <span class="opt">(ไม่บังคับ)</span></label><textarea id="eq-def" rows="2" placeholder="ระบุตำหนิ ถ้ามี..."></textarea></div>
+      <div id="eq-qr"><label class="fl">จำนวน <span class="req">*</span></label><input type="number" id="eq-qty" value="1" min="1" max="99"><div style="font-size:.7rem;color:var(--t3);margin-top:4px;">หากใส่มากกว่า 1 จะสร้างเป็นรายการแยกแต่ละชิ้น</div></div>
+      <div><label class="fl">สถานะ</label><select id="eq-sts"><option value="ว่าง">✅ ว่าง</option><option value="ไม่ว่าง">🔴 ไม่ว่าง</option><option value="จำหน่าย">⬜ จำหน่าย</option></select></div>
       <div>
         <label class="fl">รูปภาพ <span class="opt">(ไม่บังคับ)</span></label>
-        <input type="file" id="eq-img-input" accept="image/*" style="display:none;" onchange="handleImgUpload(this)">
-        <div id="img-drop" class="img-drop" onclick="document.getElementById('eq-img-input').click()">
-          <svg width="28" height="28" fill="none" stroke="var(--t3)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          <div style="font-size:.8125rem;color:var(--t3);margin-top:4px;">คลิกเพื่อเลือกรูปภาพ</div>
-          <div style="font-size:.7rem;color:#CBD5E1;margin-top:2px;">JPG, PNG, WEBP — ขนาดไม่เกิน 10MB</div>
+        <input type="file" id="eq-img-in" accept="image/*" style="display:none;" onchange="handleImg(this)">
+        <div id="img-drop" class="img-drop" onclick="document.getElementById('eq-img-in').click()">
+          <svg width="28" height="28" fill="none" stroke="var(--t3)" stroke-width="1.5" viewBox="0 0 24 24" style="display:block;margin:0 auto 6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <div style="font-size:.8125rem;color:var(--t3);">คลิกเพื่อเลือกรูปภาพ</div>
+          <div style="font-size:.7rem;color:#CBD5E1;margin-top:2px;">JPG, PNG, WEBP</div>
         </div>
-        <div id="img-prev-wrap" class="img-prev-wrap" style="display:none;">
-          <img id="eq-img-prev" class="img-prev" src="" alt="preview">
-          <button class="img-rm" onclick="removeImg()" title="ลบรูป">×</button>
+        <div id="img-pw" class="img-pw" style="display:none;">
+          <img id="eq-img-pr" class="img-pr" src="" alt="preview">
+          <button class="img-rm" onclick="rmImg()">×</button>
         </div>
       </div>
     </div>
-    <div class="mfoot"><button class="btn-g" onclick="closeEqModal()" style="flex:1;">ยกเลิก</button><button class="btn-p" onclick="saveEq()" style="flex:2;justify-content:center;">บันทึก</button></div>
+    <div class="mf"><button class="bg" onclick="closeEqM()" style="flex:1;">ยกเลิก</button><button class="bp" onclick="saveEq()" style="flex:2;justify-content:center;">บันทึก</button></div>
   </div>
 </div>
 
-<!-- ════ MODAL: Rental ════ -->
-<div class="mo" id="rt-modal" onclick="if(event.target===this)closeRentalModal()">
+<!-- MODAL: Rental -->
+<div class="mo" id="rt-modal" onclick="if(event.target===this)closeRtM()">
   <div class="mb" style="max-width:680px;margin:1rem 0;">
-    <div class="mh"><div class="mt" id="rt-mt">เพิ่มรายการยืม / เช่า</div><button class="mc" onclick="closeRentalModal()"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
-    <div class="mbody mscroll">
+    <div class="mh"><div class="mt" id="rt-mt">เพิ่มรายการยืม / เช่า</div><button class="mc" onclick="closeRtM()"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+    <div class="mbody msc">
       <input type="hidden" id="r-id"><input type="hidden" id="r-orig">
       <div class="fg2">
         <div><label class="fl">ชื่อผู้เช่า <span class="req">*</span></label><input type="text" id="r-renter" placeholder="ชื่อผู้เช่า / ลูกค้า"></div>
-        <div><label class="fl">สถานะ</label><select id="r-status"><option value="นัดแล้ว">📅 นัดแล้ว</option><option value="รอส่งของ">📦 รอส่งของ</option><option value="ส่งของแล้ว">🚚 ส่งของแล้ว</option><option value="เสร็จสิ้น">✅ เสร็จสิ้น</option><option value="ยกเลิก">❌ ยกเลิก</option></select></div>
+        <div><label class="fl">สถานะ</label><select id="r-sts"><option value="นัดแล้ว">📅 นัดแล้ว</option><option value="รอส่งของ">📦 รอส่งของ</option><option value="ส่งของแล้ว">🚚 ส่งของแล้ว</option><option value="เสร็จสิ้น">✅ เสร็จสิ้น</option><option value="ยกเลิก">❌ ยกเลิก</option></select></div>
       </div>
-      <!-- Multi-select equipment -->
       <div>
         <label class="fl">รายการอุปกรณ์ที่เช่า <span class="req">*</span></label>
-        <div class="ms-wrap">
-          <div class="ms-btn" id="ms-btn" onclick="toggleMs()">
+        <div class="ms-w">
+          <div class="ms-b" id="ms-btn" onclick="toggleMs()">
             <span id="ms-lbl" style="font-size:.8125rem;color:var(--t3);">เลือกอุปกรณ์...</span>
             <svg width="13" height="13" fill="none" stroke="var(--t3)" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
           </div>
-          <div class="ms-panel" id="ms-panel" style="display:none;">
-            <input type="text" id="ms-search" placeholder="🔍 ค้นหาอุปกรณ์..." oninput="filterMs(this.value)">
-            <div class="ms-list" id="ms-list"></div>
-          </div>
+          <div class="ms-p" id="ms-panel" style="display:none;"><input type="text" id="ms-s" placeholder="🔍 ค้นหาอุปกรณ์..." oninput="filterMs(this.value)"><div class="ms-l" id="ms-list"></div></div>
         </div>
-        <div class="ms-tags" id="ms-tags"></div>
-        <div id="ms-warn" class="alert-w" style="display:none;margin-top:8px;">⚠️ ไม่มีอุปกรณ์ว่างในคลัง โปรดตรวจสอบคลังอุปกรณ์</div>
+        <div class="ms-tg" id="ms-tags"></div>
+        <div id="ms-warn" class="aw" style="display:none;margin-top:8px;">⚠️ ไม่มีอุปกรณ์ว่างในคลัง โปรดตรวจสอบคลังอุปกรณ์</div>
       </div>
-      <div class="fg2">
-        <div><label class="fl">วันที่เริ่มเช่า <span class="req">*</span></label><input type="date" id="r-sd"></div>
-        <div><label class="fl">เวลาเริ่มเช่า</label><input type="time" id="r-st"></div>
-      </div>
-      <div class="fg2">
-        <div><label class="fl">วันที่สิ้นสุด <span class="req">*</span></label><input type="date" id="r-ed"></div>
-        <div><label class="fl">เวลาสิ้นสุด</label><input type="time" id="r-et"></div>
-      </div>
-      <div class="fg2">
-        <div><label class="fl">ชื่อผู้ติดต่อ</label><input type="text" id="r-cname" placeholder="ชื่อผู้ติดต่อ"></div>
-        <div><label class="fl">เบอร์ผู้ติดต่อ</label><input type="tel" id="r-cphone" placeholder="0XX-XXX-XXXX"></div>
-      </div>
+      <div class="fg2"><div><label class="fl">วันที่เริ่มเช่า <span class="req">*</span></label><input type="date" id="r-sd"></div><div><label class="fl">เวลาเริ่มเช่า</label><input type="time" id="r-st"></div></div>
+      <div class="fg2"><div><label class="fl">วันที่สิ้นสุด <span class="req">*</span></label><input type="date" id="r-ed"></div><div><label class="fl">เวลาสิ้นสุด</label><input type="time" id="r-et"></div></div>
+      <div class="fg2"><div><label class="fl">ชื่อผู้ติดต่อ</label><input type="text" id="r-cn" placeholder="ชื่อผู้ติดต่อ"></div><div><label class="fl">เบอร์ผู้ติดต่อ</label><input type="tel" id="r-cp" placeholder="0XX-XXX-XXXX"></div></div>
       <div class="fg2">
         <div><label class="fl">ความสำคัญ</label><select id="r-pri"><option value="ปกติ" selected>ปกติ</option><option value="สำคัญ">🔴 สำคัญ</option></select></div>
-        <div><label class="fl">สภาพอุปกรณ์</label><select id="r-eqcond"><option value="">— เลือกสภาพ —</option><option>ใหม่</option><option>ดีมาก</option><option>ดี</option><option>พอใช้</option><option>ต้องซ่อม</option></select></div>
+        <div><label class="fl">สภาพอุปกรณ์</label><select id="r-ec"><option value="">— เลือกสภาพ —</option><option>ใหม่</option><option>ดีมาก</option><option>ดี</option><option>พอใช้</option><option>ต้องซ่อม</option></select></div>
       </div>
       <div><label class="fl">ตำหนิ <span class="opt">(ไม่บังคับ)</span></label><input type="text" id="r-def" placeholder="ตำหนิของอุปกรณ์ ถ้ามี..."></div>
       <div><label class="fl">หมายเหตุ</label><textarea id="r-notes" rows="2" placeholder="หมายเหตุเพิ่มเติม..."></textarea></div>
     </div>
-    <div class="mfoot"><button class="btn-g" onclick="closeRentalModal()" style="flex:1;">ยกเลิก</button><button class="btn-p" onclick="saveRental()" style="flex:2;justify-content:center;">บันทึก</button></div>
+    <div class="mf"><button class="bg" onclick="closeRtM()" style="flex:1;">ยกเลิก</button><button class="bp" onclick="saveRental()" style="flex:2;justify-content:center;">บันทึก</button></div>
   </div>
 </div>
 
 <!-- Lightbox -->
-<div class="lb" id="lightbox" onclick="closeLightbox()">
-  <button class="lb-close" onclick="closeLightbox()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
-  <img id="lb-img" src="" alt="" onclick="event.stopPropagation()">
-</div>
+<div class="lb" id="lb" onclick="closeLb()"><button class="lb-x" onclick="closeLb()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button><img id="lb-img" src="" onclick="event.stopPropagation()"></div>
 
 <!-- Toast -->
-<div id="toast"><div class="ti"><svg width="15" height="15" fill="none" stroke="#34D399" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span id="toast-msg">บันทึกเรียบร้อย</span></div></div>
+<div id="toast"><div class="ti" id="toast-inner"><span id="toast-msg"></span></div></div>
 
 <script>
-// ── State ──────────────────────────────────────────────────────────────────
+// ── Supabase ──────────────────────────────────────────────────────────────────
+const SB_URL = 'https://vlmsbuoxqcnxxhwqncnb.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsbXNidW94cWNueHhod3FuY25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTUxNzksImV4cCI6MjA5NzE3MTE3OX0.1koUWdXHHpi-d9txWkZNEXuWwvkZhdvs7iAJy3kFLG8';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// ── State ─────────────────────────────────────────────────────────────────────
 let equipment=[],rentals=[],history=[];
-let nextEid=1,nextRid=1;
-let curSection='eq',curView='table';
-let calDate=new Date();
-let eqCatFilter='all',eqDir='asc',rtDir='desc',hiDir='desc';
-let msOpen=false,msSearchQ='',curImgData=null;
+let curSec='eq',curView='table',calDate=new Date();
+let eqCat='all',eqDir='asc',rtDir='desc',hiDir='desc';
+let msOpen=false,curImg=null;
 
-const THAI_MO=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-const THAI_MO_S=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+// ── Constants ─────────────────────────────────────────────────────────────────
+const MO_L=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const MO_S=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
-// ── Persist ────────────────────────────────────────────────────────────────
-function save(){localStorage.setItem('sm3_eq',JSON.stringify(equipment));localStorage.setItem('sm3_rt',JSON.stringify(rentals));localStorage.setItem('sm3_hi',JSON.stringify(history));localStorage.setItem('sm3_ei',nextEid);localStorage.setItem('sm3_ri',nextRid);}
-function load(){try{equipment=JSON.parse(localStorage.getItem('sm3_eq')||'[]');rentals=JSON.parse(localStorage.getItem('sm3_rt')||'[]');history=JSON.parse(localStorage.getItem('sm3_hi')||'[]');nextEid=+localStorage.getItem('sm3_ei')||1;nextRid=+localStorage.getItem('sm3_ri')||1;}catch{equipment=[];rentals=[];history=[];}}
+// ── Mappers DB → JS ───────────────────────────────────────────────────────────
+const mEq=r=>({id:r.id,name:r.name,model:r.model||'',category:r.category||'อุปกรณ์',condition:r.condition||'',defects:r.defects||'',status:r.status,dateAdded:r.date_added||'',image:r.image||null});
+const mRt=r=>({id:r.id,renterName:r.renter_name,equipmentIds:r.equipment_ids||[],startDate:r.start_date||'',startTime:r.start_time?.slice(0,5)||'',endDate:r.end_date||'',endTime:r.end_time?.slice(0,5)||'',contactName:r.contact_name||'',contactPhone:r.contact_phone||'',status:r.status,priority:r.priority||'ปกติ',equipmentCondition:r.equipment_condition||'',defects:r.defects||'',notes:r.notes||''});
 
-// ── Utils ──────────────────────────────────────────────────────────────────
+// ── Mappers JS → DB ───────────────────────────────────────────────────────────
+const eqDB=o=>({name:o.name,model:o.model||null,category:o.category,condition:o.condition,defects:o.defects||null,status:o.status,date_added:o.dateAdded||null,image:o.image||null});
+const rtDB=o=>({renter_name:o.renterName,equipment_ids:o.equipmentIds,start_date:o.startDate||null,start_time:o.startTime||null,end_date:o.endDate||null,end_time:o.endTime||null,contact_name:o.contactName||null,contact_phone:o.contactPhone||null,status:o.status,priority:o.priority||'ปกติ',equipment_condition:o.equipmentCondition||null,defects:o.defects||null,notes:o.notes||null});
+
+// ── Loader & connection ───────────────────────────────────────────────────────
+function showLoader(on){document.getElementById('app-loader').style.display=on?'flex':'none';}
+function setConn(state){
+  const d=document.getElementById('conn-dot'),t=document.getElementById('conn-txt');
+  if(state==='ok'){d.className='conn-dot conn-ok';t.textContent='เชื่อมต่อแล้ว';}
+  else if(state==='err'){d.className='conn-dot conn-err';t.textContent='เชื่อมต่อไม่ได้';}
+  else{d.className='conn-dot conn-wait';t.textContent='กำลังเชื่อมต่อ...';}
+}
+
+// ── Load all data ─────────────────────────────────────────────────────────────
+async function loadAll(){
+  showLoader(true);setConn('wait');
+  try{
+    const[e1,e2,e3]=await Promise.all([
+      sb.from('equipment').select('*').order('id'),
+      sb.from('rentals').select('*').order('created_at',{ascending:false}),
+      sb.from('history').select('*').order('created_at',{ascending:false})
+    ]);
+    if(e1.error)throw e1.error;
+    if(e2.error)throw e2.error;
+    if(e3.error)throw e3.error;
+    equipment=e1.data.map(mEq);
+    rentals=e2.data.map(mRt);
+    history=e3.data.map(mRt);
+    setConn('ok');renderAll();
+  }catch(err){setConn('err');toast('⚠️ โหลดข้อมูลไม่สำเร็จ: '+err.message,'err');}
+  showLoader(false);
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
 const esc=s=>s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-function fmtD(d,t){if(!d)return'—';const dt=new Date(d+'T00:00:00');return`${dt.getDate()} ${THAI_MO_S[dt.getMonth()]} ${dt.getFullYear()+543}${t?' '+t:''}`;}
-function eqLabel(ids){if(!ids?.length)return'—';return ids.map(id=>equipment.find(e=>e.id===id)?.name??'?').join(', ');}
-const sBadge=s=>{const m={นัดแล้ว:'b-blue',รอส่งของ:'b-amber',ส่งของแล้ว:'b-orange',เสร็จสิ้น:'b-green',ยกเลิก:'b-gray'};return`<span class="badge ${m[s]||'b-gray'}">${esc(s)}</span>`;};
-const pBadge=p=>{const m={ปกติ:'b-blue',สำคัญ:'b-red'};return`<span class="badge ${m[p]||'b-gray'}">${esc(p)}</span>`;};
-const eqSBadge=s=>{const m={ว่าง:'b-green',ไม่ว่าง:'b-red',จำหน่าย:'b-gray'};return`<span class="badge ${m[s]||'b-gray'}">${esc(s)}</span>`;};
-const catBadge=c=>{const m={อุปกรณ์:'b-indigo',ชุด:'b-purple',อื่นๆ:'b-gray'};return`<span class="badge ${m[c]||'b-gray'}">${esc(c)}</span>`;};
+function fmtD(d,t){if(!d)return'—';const dt=new Date(d+'T00:00:00');return`${dt.getDate()} ${MO_S[dt.getMonth()]} ${dt.getFullYear()+543}${t?' '+t:''}`;}
+function eqLbl(ids){if(!ids?.length)return'—';return ids.map(id=>equipment.find(e=>e.id===id)?.name??'?').join(', ');}
+const sBadge=s=>{const m={นัดแล้ว:'b-bl',รอส่งของ:'b-am',ส่งของแล้ว:'b-or',เสร็จสิ้น:'b-gr',ยกเลิก:'b-gy'};return`<span class="badge ${m[s]||'b-gy'}">${esc(s)}</span>`;};
+const pBadge=p=>p==='สำคัญ'?'<span class="badge b-rd">สำคัญ</span>':'<span class="badge b-bl">ปกติ</span>';
+const eqSB=s=>{const m={ว่าง:'b-gr',ไม่ว่าง:'b-rd',จำหน่าย:'b-gy'};return`<span class="badge ${m[s]||'b-gy'}">${esc(s)}</span>`;};
+const catB=c=>{const m={อุปกรณ์:'b-in',ชุด:'b-pu',อื่นๆ:'b-gy'};return`<span class="badge ${m[c]||'b-gy'}">${esc(c)}</span>`;};
 function ibBtns(ef,df){return`<div style="display:flex;align-items:center;justify-content:flex-end;gap:3px;"><button class="ib ed" onclick="${ef}"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button><button class="ib dl" onclick="${df}"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div>`;}
-function toast(msg){document.getElementById('toast-msg').textContent=msg;const t=document.getElementById('toast');t.style.transform='translateY(0)';t.style.opacity='1';setTimeout(()=>{t.style.transform='translateY(80px)';t.style.opacity='0';},3000);}
+function toast(msg,type){const ti=document.getElementById('toast-inner');ti.style.background=type==='err'?'#991B1B':'#1E293B';document.getElementById('toast-msg').textContent=msg;const t=document.getElementById('toast');t.style.transform='translateY(0)';t.style.opacity='1';setTimeout(()=>{t.style.transform='translateY(80px)';t.style.opacity='0';},3500);}
 function today(){return new Date().toISOString().split('T')[0];}
+const thumbH=(e,sz=44)=>e.image?`<img class="eq-th" src="${e.image}" style="width:${sz}px;height:${sz}px;" onclick="event.stopPropagation();showLb(this.src)" title="ดูรูป">`:`<div class="th-ph" style="width:${sz}px;height:${sz}px;"><svg width="${Math.round(sz*.46)}" height="${Math.round(sz*.46)}" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>`;
 
-// ── Image helpers ─────────────────────────────────────────────────────────────
-function handleImgUpload(input){
-  const file=input.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(ev){
-    const img=new Image();
-    img.onload=function(){
-      const MAX=700;
-      let w=img.width,h=img.height;
-      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
-      const c=document.createElement('canvas');c.width=w;c.height=h;
-      c.getContext('2d').drawImage(img,0,0,w,h);
-      curImgData=c.toDataURL('image/jpeg',0.72);
-      document.getElementById('eq-img-prev').src=curImgData;
-      document.getElementById('img-prev-wrap').style.display='';
-      document.getElementById('img-drop').style.display='none';
-    };
-    img.src=ev.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-function removeImg(){
-  curImgData=null;
-  document.getElementById('eq-img-prev').src='';
-  document.getElementById('img-prev-wrap').style.display='none';
-  document.getElementById('img-drop').style.display='';
-  document.getElementById('eq-img-input').value='';
-}
-function resetImgUI(){
-  curImgData=null;
-  document.getElementById('eq-img-prev').src='';
-  document.getElementById('img-prev-wrap').style.display='none';
-  document.getElementById('img-drop').style.display='';
-  document.getElementById('eq-img-input').value='';
-}
-function showLightbox(src){
-  document.getElementById('lb-img').src=src;
-  document.getElementById('lightbox').classList.add('open');
-}
-function closeLightbox(){
-  document.getElementById('lightbox').classList.remove('open');
-  document.getElementById('lb-img').src='';
-}
-const thumbHtml=(e,size=44)=>e.image
-  ?`<img class="eq-thumb" src="${e.image}" style="width:${size}px;height:${size}px;" onclick="event.stopPropagation();showLightbox('${e.image.replace(/'/g,"\\'")}');return false;" title="ดูรูป">`
-  :`<div class="thumb-ph" style="width:${size}px;height:${size}px;"><svg width="${Math.round(size*.5)}" height="${Math.round(size*.5)}" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>`;
-
-// ── Navigation ─────────────────────────────────────────────────────────────
-function setSection(n){curSection=n;document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById('section-'+n).classList.add('active');document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));document.getElementById('nav-'+n).classList.add('active');renderAll();}
+// ── Nav ───────────────────────────────────────────────────────────────────────
+function setSection(n){curSec=n;document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));document.getElementById('section-'+n).classList.add('active');document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));document.getElementById('nav-'+n).classList.add('active');renderAll();}
 function setView(v){curView=v;['table','cal','list'].forEach(x=>{document.getElementById('view-'+x).style.display=x===v?'':'none';document.getElementById('vb-'+x).classList.toggle('active',x===v);});if(v==='cal')renderCal();else renderRentals();}
 
-// ── Sort dir ───────────────────────────────────────────────────────────────
-const AscSVG=`<path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>`;
-const DescSVG=`<path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m-4 4l4 4m0 0l4-4m-4 4V8"/>`;
-function toggleEqDir(){eqDir=eqDir==='asc'?'desc':'asc';document.getElementById('eq-dir-ico').innerHTML=eqDir==='asc'?AscSVG:DescSVG;renderEq();}
-function toggleRtDir(){rtDir=rtDir==='asc'?'desc':'asc';document.getElementById('rt-dir-ico').innerHTML=rtDir==='asc'?AscSVG:DescSVG;renderRentals();}
-function toggleHiDir(){hiDir=hiDir==='asc'?'desc':'asc';document.getElementById('hi-dir-ico').innerHTML=hiDir==='asc'?AscSVG:DescSVG;renderHist();}
+// ── Sort dir ──────────────────────────────────────────────────────────────────
+const ASC=`<path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>`;
+const DSC=`<path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m-4 4l4 4m0 0l4-4m-4 4V8"/>`;
+function tEqDir(){eqDir=eqDir==='asc'?'desc':'asc';document.getElementById('eq-di').innerHTML=eqDir==='asc'?ASC:DSC;renderEq();}
+function tRtDir(){rtDir=rtDir==='asc'?'desc':'asc';document.getElementById('rt-di').innerHTML=rtDir==='asc'?ASC:DSC;renderRentals();}
+function tHiDir(){hiDir=hiDir==='asc'?'desc':'asc';document.getElementById('hi-di').innerHTML=hiDir==='asc'?ASC:DSC;renderHist();}
+function setCat(c,el){eqCat=c;document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderEq();}
 
-// ── Cat filter ─────────────────────────────────────────────────────────────
-function setCatFilter(cat,el){eqCatFilter=cat;document.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderEq();}
-
-// ── Stats ──────────────────────────────────────────────────────────────────
+// ── Stats ─────────────────────────────────────────────────────────────────────
 function updateStats(){
-  const avail=equipment.filter(e=>e.status==='ว่าง').length;
-  const busy=equipment.filter(e=>e.status==='ไม่ว่าง').length;
-  const sold=equipment.filter(e=>e.status==='จำหน่าย').length;
-  const rt=rentals.length;
-  ['ss-total','dc-total'].forEach(id=>document.getElementById(id).textContent=equipment.length);
-  ['ss-avail','dc-avail'].forEach(id=>document.getElementById(id).textContent=avail);
-  ['ss-busy','dc-busy'].forEach(id=>document.getElementById(id).textContent=busy);
-  ['ss-sold','dc-sold'].forEach(id=>document.getElementById(id).textContent=sold);
-  ['ss-rt','dc-rt'].forEach(id=>document.getElementById(id).textContent=rt);
-  // Cat tab counts
+  const av=equipment.filter(e=>e.status==='ว่าง').length,bz=equipment.filter(e=>e.status==='ไม่ว่าง').length,sd=equipment.filter(e=>e.status==='จำหน่าย').length;
+  ['ss-t','dc-t'].forEach(id=>document.getElementById(id).textContent=equipment.length);
+  ['ss-a','dc-a'].forEach(id=>document.getElementById(id).textContent=av);
+  ['ss-b','dc-b'].forEach(id=>document.getElementById(id).textContent=bz);
+  ['ss-s','dc-s'].forEach(id=>document.getElementById(id).textContent=sd);
+  ['ss-r','dc-r'].forEach(id=>document.getElementById(id).textContent=rentals.length);
   const cats={all:equipment.length,'อุปกรณ์':0,'ชุด':0,'อื่นๆ':0};
   equipment.forEach(e=>{if(cats[e.category]!==undefined)cats[e.category]++;});
   document.getElementById('ct-all').textContent=cats.all?`(${cats.all})`:'';
   document.getElementById('ct-eq').textContent=cats['อุปกรณ์']?`(${cats['อุปกรณ์']})`:'';
   document.getElementById('ct-set').textContent=cats['ชุด']?`(${cats['ชุด']})`:'';
-  document.getElementById('ct-other').textContent=cats['อื่นๆ']?`(${cats['อื่นๆ']})`:'';
+  document.getElementById('ct-oth').textContent=cats['อื่นๆ']?`(${cats['อื่นๆ']})`:'';
 }
 
-// ── Equipment filter/sort ──────────────────────────────────────────────────
-function getFilteredEq(){
-  const q=(document.getElementById('eq-search')?.value||'').toLowerCase();
-  const fSt=document.getElementById('eq-f-status')?.value||'all';
-  const srt=document.getElementById('eq-sort')?.value||'name';
-  let data=equipment.filter(e=>{
-    if(eqCatFilter!=='all'&&e.category!==eqCatFilter)return false;
-    if(fSt!=='all'&&e.status!==fSt)return false;
-    if(q&&!e.name.toLowerCase().includes(q)&&!(e.model||'').toLowerCase().includes(q))return false;
-    return true;
-  });
+// ── Filter helpers ────────────────────────────────────────────────────────────
+function fEq(){
+  const q=(document.getElementById('eq-s')?.value||'').toLowerCase(),fst=document.getElementById('eq-fs')?.value||'all',srt=document.getElementById('eq-so')?.value||'name';
+  let d=equipment.filter(e=>{if(eqCat!=='all'&&e.category!==eqCat)return false;if(fst!=='all'&&e.status!==fst)return false;if(q&&!e.name.toLowerCase().includes(q)&&!(e.model||'').toLowerCase().includes(q))return false;return true;});
   const dir=eqDir==='asc'?1:-1;
-  data.sort((a,b)=>{
-    if(srt==='name')return dir*(a.name.localeCompare(b.name,'th'));
-    if(srt==='cat')return dir*(a.category||'').localeCompare(b.category||'','th');
-    if(srt==='status')return dir*(a.status||'').localeCompare(b.status||'','th');
-    if(srt==='date')return dir*((a.dateAdded||'').localeCompare(b.dateAdded||''));
-    return 0;
-  });
-  return data;
+  d.sort((a,b)=>{if(srt==='name')return dir*a.name.localeCompare(b.name,'th');if(srt==='cat')return dir*(a.category||'').localeCompare(b.category||'','th');if(srt==='status')return dir*(a.status||'').localeCompare(b.status||'','th');if(srt==='date')return dir*((a.dateAdded||'').localeCompare(b.dateAdded||''));return 0;});
+  return d;
+}
+function fRt(data,si,sti,pi,soi,dir){
+  const q=(document.getElementById(si)?.value||'').toLowerCase(),fst=document.getElementById(sti)?.value||'all',fp=pi?document.getElementById(pi)?.value||'all':'all',srt=document.getElementById(soi)?.value||'date';
+  let d=data.filter(r=>{if(q&&!r.renterName.toLowerCase().includes(q))return false;if(fst!=='all'&&r.status!==fst)return false;if(fp!=='all'&&r.priority!==fp)return false;return true;});
+  const dv=dir==='asc'?1:-1;
+  d.sort((a,b)=>{if(srt==='date')return dv*(a.startDate||'').localeCompare(b.startDate||'');if(srt==='renter')return dv*a.renterName.localeCompare(b.renterName,'th');if(srt==='status')return dv*a.status.localeCompare(b.status,'th');if(srt==='pri')return dv*(a.priority==='สำคัญ'?0:1)-(b.priority==='สำคัญ'?0:1);return 0;});
+  return d;
 }
 
-// ── Render Equipment ────────────────────────────────────────────────────────
+// ── Render Equipment ──────────────────────────────────────────────────────────
 function renderEq(){
-  const data=getFilteredEq();
-  const tb=document.getElementById('eq-tbody');
-  const em=document.getElementById('eq-empty');
+  const data=fEq(),tb=document.getElementById('eq-tb'),em=document.getElementById('eq-em');
   if(!data.length){tb.innerHTML='';em.style.display='';return;}
   em.style.display='none';
-  tb.innerHTML=data.map((e,i)=>
-    `<tr><td style="color:var(--t3);font-size:.73rem;">${i+1}</td>
-    <td style="padding:.5rem .875rem;">${thumbHtml(e)}</td>
-    <td style="font-weight:600;color:var(--text);">${esc(e.name)}</td>
+  tb.innerHTML=data.map((e,i)=>`<tr>
+    <td style="color:var(--t3);font-size:.73rem;">${i+1}</td>
+    <td style="padding:.5rem .875rem;">${thumbH(e)}</td>
+    <td style="font-weight:600;color:var(--tx);">${esc(e.name)}</td>
     <td>${esc(e.model||'—')}</td>
-    <td>${catBadge(e.category||'อุปกรณ์')}</td>
+    <td>${catB(e.category||'อุปกรณ์')}</td>
     <td>${esc(e.condition||'—')}</td>
-    <td style="font-size:.73rem;max-width:120px;"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(e.defects||'')}">${esc(e.defects||'—')}</div></td>
-    <td style="font-size:.73rem;white-space:nowrap;">${esc(e.dateAdded||'—')}</td>
-    <td>${eqSBadge(e.status)}</td>
-    <td>${ibBtns('openEqModal('+e.id+')','delEq('+e.id+')')}</td></tr>`
-  ).join('');
+    <td style="font-size:.73rem;max-width:110px;"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(e.defects||'')}">${esc(e.defects||'—')}</div></td>
+    <td style="font-size:.73rem;white-space:nowrap;">${esc(e.dateAdded?fmtD(e.dateAdded):'—')}</td>
+    <td>${eqSB(e.status)}</td>
+    <td>${ibBtns('openEqM('+e.id+')','delEq('+e.id+')')}</td>
+  </tr>`).join('');
 }
 
-// ── Rental filter/sort ─────────────────────────────────────────────────────
-function getFilteredRentals(data,searchId,statusId,priId,sortId,dir){
-  const q=(document.getElementById(searchId)?.value||'').toLowerCase();
-  const fSt=document.getElementById(statusId)?.value||'all';
-  const fPri=priId?document.getElementById(priId)?.value||'all':'all';
-  const srt=document.getElementById(sortId)?.value||'date';
-  let out=data.filter(r=>{
-    if(q&&!r.renterName.toLowerCase().includes(q))return false;
-    if(fSt!=='all'&&r.status!==fSt)return false;
-    if(fPri!=='all'&&r.priority!==fPri)return false;
-    return true;
-  });
-  const d=dir==='asc'?1:-1;
-  const priOrd={สำคัญ:0,ปกติ:1};
-  out.sort((a,b)=>{
-    if(srt==='date')return d*((a.startDate||'').localeCompare(b.startDate||''));
-    if(srt==='renter')return d*(a.renterName.localeCompare(b.renterName,'th'));
-    if(srt==='status')return d*(a.status.localeCompare(b.status,'th'));
-    if(srt==='priority')return d*((priOrd[a.priority]??2)-(priOrd[b.priority]??2));
-    return 0;
-  });
-  return out;
-}
-
-// ── Render rental table ─────────────────────────────────────────────────────
-function renderRentalTbl(data,tbId,emId,isHist){
-  const tb=document.getElementById(tbId);const em=document.getElementById(emId);
+// ── Render Rental Table ───────────────────────────────────────────────────────
+function renderTbl(data,tbId,emId,isH){
+  const tb=document.getElementById(tbId),em=document.getElementById(emId);
   if(!data.length){tb.innerHTML='';em.style.display='';return;}
   em.style.display='none';
-  const ef=isHist?'openRentalModal':'openRentalModal';
-  const df=isHist?'delHist':'delRental';
+  const ef='openRtM',df=isH?'delHist':'delRental';
   tb.innerHTML=data.map(r=>`<tr${r.priority==='สำคัญ'?' class="imp"':''}>
-    <td style="font-weight:600;color:var(--text);">${esc(r.renterName)}</td>
-    <td style="font-size:.73rem;max-width:150px;"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(eqLabel(r.equipmentIds))}">${esc(eqLabel(r.equipmentIds))}</div></td>
+    <td style="font-weight:600;color:var(--tx);">${esc(r.renterName)}</td>
+    <td style="font-size:.73rem;max-width:150px;"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(eqLbl(r.equipmentIds))}</div></td>
     <td style="font-size:.73rem;white-space:nowrap;">${fmtD(r.startDate,r.startTime)}</td>
     <td style="font-size:.73rem;white-space:nowrap;">${fmtD(r.endDate,r.endTime)}</td>
     <td style="font-size:.73rem;"><div>${esc(r.contactName||'—')}</div><div style="color:var(--t3);">${esc(r.contactPhone||'')}</div></td>
@@ -652,118 +494,86 @@ function renderRentalTbl(data,tbId,emId,isHist){
   </tr>`).join('');
 }
 
-// ── Render list ──────────────────────────────────────────────────────────────
+// ── Render List ───────────────────────────────────────────────────────────────
 function renderList(data){
-  const ct=document.getElementById('list-ct');const em=document.getElementById('list-empty');
+  const ct=document.getElementById('list-ct'),em=document.getElementById('list-em');
   if(!data.length){ct.innerHTML='';em.style.display='';return;}
   em.style.display='none';
   ct.innerHTML=data.map(r=>`<div class="lc${r.priority==='สำคัญ'?' imp':''}">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
-      <div><div style="font-size:.9375rem;font-weight:700;color:var(--text);margin-bottom:4px;">${esc(r.renterName)}</div>
+      <div><div style="font-size:.9375rem;font-weight:700;color:var(--tx);margin-bottom:4px;">${esc(r.renterName)}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;">${sBadge(r.status)} ${pBadge(r.priority||'ปกติ')}</div></div>
-      ${ibBtns('openRentalModal('+r.id+')','delRental('+r.id+')')}
+      ${ibBtns('openRtM('+r.id+')','delRental('+r.id+')')}
     </div>
     <div style="font-size:.73rem;color:var(--t3);margin-top:5px;">📅 ${fmtD(r.startDate,r.startTime)} — ${fmtD(r.endDate,r.endTime)}</div>
-    <div class="lc-meta">
-      <div><label>อุปกรณ์</label><span>${esc(eqLabel(r.equipmentIds))}</span></div>
+    <div class="lc-m">
+      <div><label>อุปกรณ์</label><span>${esc(eqLbl(r.equipmentIds))}</span></div>
       <div><label>ผู้ติดต่อ</label><span>${esc(r.contactName||'—')}${r.contactPhone?' ('+esc(r.contactPhone)+')':''}</span></div>
       ${r.notes?`<div style="grid-column:span 2;"><label>หมายเหตุ</label><span>${esc(r.notes)}</span></div>`:''}
     </div>
   </div>`).join('');
 }
 
-// ── Calendar ─────────────────────────────────────────────────────────────────
+// ── Calendar ──────────────────────────────────────────────────────────────────
 function renderCal(){
   const yr=calDate.getFullYear(),mo=calDate.getMonth();
-  document.getElementById('cal-title').textContent=THAI_MO[mo]+' '+(yr+543);
+  document.getElementById('cal-tt').textContent=MO_L[mo]+' '+(yr+543);
   const first=new Date(yr,mo,1).getDay(),days=new Date(yr,mo+1,0).getDate();
   const td=new Date(),ty=td.getFullYear(),tm=td.getMonth(),tdd=td.getDate();
-  const pad=n=>String(n).padStart(2,'0');
-  const clsMap={นัดแล้ว:'b-blue',รอส่งของ:'b-amber',ส่งของแล้ว:'b-orange'};
-  let html='';
-  for(let i=0;i<first;i++)html+=`<div class="cal-cell other"><span class="cal-date">&nbsp;</span></div>`;
+  const p2=n=>String(n).padStart(2,'0');
+  const cm={นัดแล้ว:'b-bl',รอส่งของ:'b-am',ส่งของแล้ว:'b-or'};
+  let h='';
+  for(let i=0;i<first;i++)h+=`<div class="cal-c oth"><div class="cal-d">&nbsp;</div></div>`;
   for(let d=1;d<=days;d++){
-    const ds=`${yr}-${pad(mo+1)}-${pad(d)}`;
-    const isT=ty===yr&&tm===mo&&tdd===d;
+    const ds=`${yr}-${p2(mo+1)}-${p2(d)}`,isT=ty===yr&&tm===mo&&tdd===d;
     const evts=rentals.filter(r=>r.startDate&&r.endDate&&r.startDate<=ds&&r.endDate>=ds);
-    html+=`<div class="cal-cell${isT?' today':''}"><div class="cal-date">${d}</div>
-    ${evts.map(r=>`<div class="cal-evt badge ${clsMap[r.status]||'b-gray'}" onclick="openRentalModal(${r.id})" title="${esc(r.renterName)}">${esc(r.renterName)}</div>`).join('')}</div>`;
+    h+=`<div class="cal-c${isT?' tod':''}"><div class="cal-d">${d}</div>${evts.map(r=>`<div class="cal-ev badge ${cm[r.status]||'b-gy'}" onclick="openRtM(${r.id})" title="${esc(r.renterName)}">${esc(r.renterName)}</div>`).join('')}</div>`;
   }
-  const trail=(7-(first+days)%7)%7;
-  for(let i=1;i<=trail;i++)html+=`<div class="cal-cell other"><span class="cal-date">&nbsp;</span></div>`;
-  document.getElementById('cal-grid').innerHTML=html;
+  const tr=(7-(first+days)%7)%7;
+  for(let i=1;i<=tr;i++)h+=`<div class="cal-c oth"><div class="cal-d">&nbsp;</div></div>`;
+  document.getElementById('cal-grid').innerHTML=h;
 }
-function prevMonth(){calDate.setMonth(calDate.getMonth()-1);renderCal();}
-function nextMonth(){calDate.setMonth(calDate.getMonth()+1);renderCal();}
+function prevM(){calDate.setMonth(calDate.getMonth()-1);renderCal();}
+function nextM(){calDate.setMonth(calDate.getMonth()+1);renderCal();}
 
 // ── Master renders ────────────────────────────────────────────────────────────
 function renderRentals(){
-  const data=getFilteredRentals(rentals,'rt-search','rt-f-status','rt-f-pri','rt-sort',rtDir);
-  if(curView==='table')renderRentalTbl(data,'rt-tbody','rt-empty',false);
+  const data=fRt(rentals,'rt-s','rt-fs','rt-fp','rt-so',rtDir);
+  if(curView==='table')renderTbl(data,'rt-tb','rt-em',false);
   else if(curView==='list')renderList(data);
   else renderCal();
 }
-function renderHist(){
-  const data=getFilteredRentals(history,'hi-search','hi-f-status',null,'hi-sort',hiDir);
-  renderRentalTbl(data,'hi-tbody','hi-empty',true);
-}
+function renderHist(){renderTbl(fRt(history,'hi-s','hi-fs',null,'hi-so',hiDir),'hi-tb','hi-em',true);}
 function renderAll(){renderEq();renderRentals();renderHist();updateStats();}
 
-// ── Multi-select dropdown ──────────────────────────────────────────────────
-let msAvailIds=[];
-function toggleMs(){
-  msOpen=!msOpen;
-  const panel=document.getElementById('ms-panel');
-  const btn=document.getElementById('ms-btn');
-  panel.style.display=msOpen?'':'none';
-  btn.classList.toggle('open',msOpen);
-  if(msOpen){document.getElementById('ms-search').value='';filterMs('');}
+// ── Image helpers ─────────────────────────────────────────────────────────────
+function handleImg(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=700,c=document.createElement('canvas');
+      let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+      c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+      curImg=c.toDataURL('image/jpeg',.72);
+      document.getElementById('eq-img-pr').src=curImg;
+      document.getElementById('img-pw').style.display='';
+      document.getElementById('img-drop').style.display='none';
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
 }
-function closeMs(){msOpen=false;document.getElementById('ms-panel').style.display='none';document.getElementById('ms-btn').classList.remove('open');}
-function filterMs(q){
-  const list=document.getElementById('ms-list');
-  const lower=q.toLowerCase();
-  const origIds=JSON.parse(document.getElementById('r-orig').value||'[]');
-  const avail=equipment.filter(e=>e.status!=='จำหน่าย'&&(e.status==='ว่าง'||origIds.includes(e.id)));
-  const filtered=q?avail.filter(e=>e.name.toLowerCase().includes(lower)||(e.model||'').toLowerCase().includes(lower)):avail;
-  if(!filtered.length){list.innerHTML=`<div style="padding:12px;font-size:.8rem;color:var(--t3);text-align:center;">ไม่พบอุปกรณ์</div>`;return;}
-  const cur=getSelEqIds();
-  list.innerHTML=filtered.map(e=>`<label class="ms-item">
-    <input type="checkbox" name="eq-pick" value="${e.id}" ${cur.includes(e.id)?'checked':''} onchange="updateMsTags()">
-    ${thumbHtml(e,30)}
-    <span style="flex:1;">${esc(e.name)}${e.model?` <span style="color:var(--t3);font-size:.73rem;">(${esc(e.model)})</span>`:''}</span>
-    ${eqSBadge(e.status)}
-  </label>`).join('');
-}
-function getSelEqIds(){return Array.from(document.querySelectorAll('input[name="eq-pick"]:checked')).map(c=>+c.value);}
-function updateMsTags(){
-  const ids=getSelEqIds();
-  const lbl=document.getElementById('ms-lbl');
-  const tags=document.getElementById('ms-tags');
-  if(!ids.length){lbl.textContent='เลือกอุปกรณ์...';lbl.style.color='var(--t3)';tags.innerHTML='';return;}
-  lbl.textContent=`เลือกแล้ว ${ids.length} รายการ`;lbl.style.color='var(--text)';
-  tags.innerHTML=ids.map(id=>{
-    const e=equipment.find(x=>x.id===id);if(!e)return'';
-    return`<div class="ms-tag">${e.image?`<img src="${e.image}" style="width:18px;height:18px;border-radius:3px;object-fit:cover;">`:''} ${esc(e.name)}<button type="button" onclick="removeTag(${id})">×</button></div>`;
-  }).join('');
-}
-function removeTag(id){
-  const cb=document.querySelector(`input[name="eq-pick"][value="${id}"]`);
-  if(cb){cb.checked=false;}else{
-    const cur=getSelEqIds().filter(x=>x!==id);
-    const list=document.getElementById('ms-list');
-    const origIds=JSON.parse(document.getElementById('r-orig').value||'[]');
-    const avail=equipment.filter(e=>e.status!=='จำหน่าย'&&(e.status==='ว่าง'||origIds.includes(e.id)));
-    list.innerHTML=avail.map(e=>`<label class="ms-item"><input type="checkbox" name="eq-pick" value="${e.id}" ${cur.includes(e.id)?'checked':''} onchange="updateMsTags()">${thumbHtml(e,30)}<span style="flex:1;">${esc(e.name)}</span>${eqSBadge(e.status)}</label>`).join('');
-  }
-  updateMsTags();
-}
-// Close dropdown on outside click
-document.addEventListener('click',e=>{if(msOpen&&!document.getElementById('ms-btn').contains(e.target)&&!document.getElementById('ms-panel').contains(e.target))closeMs();});
+function rmImg(){curImg=null;document.getElementById('eq-img-pr').src='';document.getElementById('img-pw').style.display='none';document.getElementById('img-drop').style.display='';document.getElementById('eq-img-in').value='';}
+function resetImg(){curImg=null;document.getElementById('eq-img-pr').src='';document.getElementById('img-pw').style.display='none';document.getElementById('img-drop').style.display='';document.getElementById('eq-img-in').value='';}
+function showLb(src){document.getElementById('lb-img').src=src;document.getElementById('lb').classList.add('open');}
+function closeLb(){document.getElementById('lb').classList.remove('open');document.getElementById('lb-img').src='';}
 
-// ── Equipment Modal ──────────────────────────────────────────────────────────
-function openEqModal(id){
-  const qr=document.getElementById('eq-qty-row');
+// ── Equipment Modal ───────────────────────────────────────────────────────────
+function openEqM(id){
+  const qr=document.getElementById('eq-qr');
   if(id){
     const e=equipment.find(x=>x.id===id);if(!e)return;
     document.getElementById('eq-mt').textContent='แก้ไขรายการ';
@@ -772,57 +582,78 @@ function openEqModal(id){
     document.getElementById('eq-model').value=e.model||'';
     document.getElementById('eq-cat').value=e.category||'อุปกรณ์';
     document.getElementById('eq-cond').value=e.condition||'';
-    document.getElementById('eq-defects').value=e.defects||'';
+    document.getElementById('eq-def').value=e.defects||'';
     document.getElementById('eq-date').value=e.dateAdded||'';
-    document.getElementById('eq-status').value=e.status;
+    document.getElementById('eq-sts').value=e.status;
+    if(e.image){curImg=e.image;document.getElementById('eq-img-pr').src=e.image;document.getElementById('img-pw').style.display='';document.getElementById('img-drop').style.display='none';}
+    else resetImg();
     qr.style.display='none';
-    // image
-    if(e.image){curImgData=e.image;document.getElementById('eq-img-prev').src=e.image;document.getElementById('img-prev-wrap').style.display='';document.getElementById('img-drop').style.display='none';}
-    else resetImgUI();
   }else{
     document.getElementById('eq-mt').textContent='เพิ่มรายการ';
-    ['eq-id','eq-name','eq-model','eq-defects'].forEach(x=>document.getElementById(x).value='');
+    ['eq-id','eq-name','eq-model','eq-def'].forEach(x=>document.getElementById(x).value='');
     document.getElementById('eq-cat').value='อุปกรณ์';
     document.getElementById('eq-cond').value='';
     document.getElementById('eq-qty').value='1';
     document.getElementById('eq-date').value=today();
-    document.getElementById('eq-status').value='ว่าง';
-    resetImgUI();
-    qr.style.display='';
+    document.getElementById('eq-sts').value='ว่าง';
+    resetImg();qr.style.display='';
   }
   document.getElementById('eq-modal').classList.add('open');
   setTimeout(()=>document.getElementById('eq-name').focus(),60);
 }
-function closeEqModal(){document.getElementById('eq-modal').classList.remove('open');}
-function saveEq(){
-  const name=document.getElementById('eq-name').value.trim();
-  const model=document.getElementById('eq-model').value.trim();
-  const category=document.getElementById('eq-cat').value;
-  const condition=document.getElementById('eq-cond').value;
-  const defects=document.getElementById('eq-defects').value.trim();
-  const dateAdded=document.getElementById('eq-date').value;
-  const status=document.getElementById('eq-status').value;
-  const id=document.getElementById('eq-id').value;
+function closeEqM(){document.getElementById('eq-modal').classList.remove('open');}
+
+async function saveEq(){
+  const name=document.getElementById('eq-name').value.trim(),model=document.getElementById('eq-model').value.trim();
+  const category=document.getElementById('eq-cat').value,condition=document.getElementById('eq-cond').value;
+  const defects=document.getElementById('eq-def').value.trim(),dateAdded=document.getElementById('eq-date').value;
+  const status=document.getElementById('eq-sts').value,id=document.getElementById('eq-id').value;
   if(!name){alert('กรุณาใส่ชื่ออุปกรณ์');return;}
   if(!condition){alert('กรุณาเลือกสภาพ');return;}
+  const payload=eqDB({name,model,category,condition,defects,dateAdded,status,image:curImg});
   if(id){
-    const i=equipment.findIndex(e=>e.id===+id);
-    if(i>=0)equipment[i]={...equipment[i],name,model,category,condition,defects,dateAdded,status,image:curImgData};
+    const{data,error}=await sb.from('equipment').update(payload).eq('id',+id).select().single();
+    if(error){toast('⚠️ '+error.message,'err');return;}
+    const i=equipment.findIndex(e=>e.id===+id);if(i>=0)equipment[i]=mEq(data);
   }else{
     const qty=Math.min(99,Math.max(1,+document.getElementById('eq-qty').value||1));
-    for(let i=0;i<qty;i++)equipment.push({id:nextEid++,name,model,category,condition,defects,dateAdded,status,image:curImgData});
+    for(let i=0;i<qty;i++){const{data,error}=await sb.from('equipment').insert(payload).select().single();if(error){toast('⚠️ '+error.message,'err');return;}equipment.push(mEq(data));}
   }
-  save();closeEqModal();renderAll();toast(id?'แก้ไขเรียบร้อย':'เพิ่มอุปกรณ์เรียบร้อย');
-}
-function delEq(id){
-  if(!confirm('ต้องการลบรายการนี้?'))return;
-  equipment=equipment.filter(e=>e.id!==id);
-  save();renderAll();toast('ลบเรียบร้อย');
+  closeEqM();renderAll();toast(id?'แก้ไขเรียบร้อย':'เพิ่มอุปกรณ์เรียบร้อย');
 }
 
+async function delEq(id){
+  if(!confirm('ต้องการลบรายการนี้?'))return;
+  const{error}=await sb.from('equipment').delete().eq('id',id);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  equipment=equipment.filter(e=>e.id!==id);renderAll();toast('ลบเรียบร้อย');
+}
+
+// ── Multi-select ──────────────────────────────────────────────────────────────
+function toggleMs(){msOpen=!msOpen;const p=document.getElementById('ms-panel'),b=document.getElementById('ms-btn');p.style.display=msOpen?'':'none';b.classList.toggle('open',msOpen);if(msOpen){document.getElementById('ms-s').value='';filterMs('');}}
+function closeMs(){msOpen=false;document.getElementById('ms-panel').style.display='none';document.getElementById('ms-btn').classList.remove('open');}
+function filterMs(q){
+  const list=document.getElementById('ms-list'),lower=q.toLowerCase();
+  const orig=JSON.parse(document.getElementById('r-orig').value||'[]');
+  const avail=equipment.filter(e=>e.status!=='จำหน่าย'&&(e.status==='ว่าง'||orig.includes(e.id)));
+  const fil=q?avail.filter(e=>e.name.toLowerCase().includes(lower)||(e.model||'').toLowerCase().includes(lower)):avail;
+  if(!fil.length){list.innerHTML=`<div style="padding:12px;font-size:.8rem;color:var(--t3);text-align:center;">ไม่พบอุปกรณ์</div>`;return;}
+  const cur=getSelIds();
+  list.innerHTML=fil.map(e=>`<label class="ms-it"><input type="checkbox" name="eq-pick" value="${e.id}" ${cur.includes(e.id)?'checked':''} onchange="updTags()">${thumbH(e,30)}<span style="flex:1;">${esc(e.name)}${e.model?` <span style="color:var(--t3);font-size:.73rem;">(${esc(e.model)})</span>`:''} ${catB(e.category||'อุปกรณ์')}</span>${eqSB(e.status)}</label>`).join('');
+}
+function getSelIds(){return Array.from(document.querySelectorAll('input[name="eq-pick"]:checked')).map(c=>+c.value);}
+function updTags(){
+  const ids=getSelIds(),lbl=document.getElementById('ms-lbl'),tags=document.getElementById('ms-tags');
+  if(!ids.length){lbl.textContent='เลือกอุปกรณ์...';lbl.style.color='var(--t3)';tags.innerHTML='';return;}
+  lbl.textContent=`เลือกแล้ว ${ids.length} รายการ`;lbl.style.color='var(--tx)';
+  tags.innerHTML=ids.map(id=>{const e=equipment.find(x=>x.id===id);if(!e)return'';return`<div class="ms-tag">${e.image?`<img src="${e.image}" style="width:18px;height:18px;border-radius:3px;object-fit:cover;">`:''}${esc(e.name)}<button type="button" onclick="rmTag(${id})">×</button></div>`;}).join('');
+}
+function rmTag(id){const cb=document.querySelector(`input[name="eq-pick"][value="${id}"]`);if(cb){cb.checked=false;}else{const cur=getSelIds().filter(x=>x!==id),orig=JSON.parse(document.getElementById('r-orig').value||'[]'),avail=equipment.filter(e=>e.status!=='จำหน่าย'&&(e.status==='ว่าง'||orig.includes(e.id)));document.getElementById('ms-list').innerHTML=avail.map(e=>`<label class="ms-it"><input type="checkbox" name="eq-pick" value="${e.id}" ${cur.includes(e.id)?'checked':''} onchange="updTags()">${thumbH(e,30)}<span style="flex:1;">${esc(e.name)}</span>${eqSB(e.status)}</label>`).join('');}updTags();}
+document.addEventListener('click',e=>{if(msOpen&&!document.getElementById('ms-btn').contains(e.target)&&!document.getElementById('ms-panel').contains(e.target))closeMs();});
+
 // ── Rental Modal ──────────────────────────────────────────────────────────────
-function openRentalModal(id){
-  let origEq=[];
+function openRtM(id){
+  let orig=[];
   if(id){
     const r=rentals.find(x=>x.id===id)||history.find(x=>x.id===id);if(!r)return;
     document.getElementById('rt-mt').textContent='แก้ไขรายการยืม / เช่า';
@@ -830,82 +661,75 @@ function openRentalModal(id){
     document.getElementById('r-renter').value=r.renterName;
     document.getElementById('r-sd').value=r.startDate||'';document.getElementById('r-st').value=r.startTime||'';
     document.getElementById('r-ed').value=r.endDate||'';document.getElementById('r-et').value=r.endTime||'';
-    document.getElementById('r-cname').value=r.contactName||'';document.getElementById('r-cphone').value=r.contactPhone||'';
-    document.getElementById('r-status').value=r.status;document.getElementById('r-pri').value=r.priority||'ปกติ';
-    document.getElementById('r-eqcond').value=r.equipmentCondition||'';
+    document.getElementById('r-cn').value=r.contactName||'';document.getElementById('r-cp').value=r.contactPhone||'';
+    document.getElementById('r-sts').value=r.status;document.getElementById('r-pri').value=r.priority||'ปกติ';
+    document.getElementById('r-ec').value=r.equipmentCondition||'';
     document.getElementById('r-def').value=r.defects||'';document.getElementById('r-notes').value=r.notes||'';
-    origEq=r.equipmentIds||[];
+    orig=r.equipmentIds||[];
   }else{
     document.getElementById('rt-mt').textContent='เพิ่มรายการยืม / เช่า';
-    ['r-id','r-renter','r-sd','r-st','r-ed','r-et','r-cname','r-cphone','r-def','r-notes'].forEach(x=>document.getElementById(x).value='');
-    document.getElementById('r-status').value='นัดแล้ว';document.getElementById('r-pri').value='ปกติ';document.getElementById('r-eqcond').value='';
+    ['r-id','r-renter','r-sd','r-st','r-ed','r-et','r-cn','r-cp','r-def','r-notes'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('r-sts').value='นัดแล้ว';document.getElementById('r-pri').value='ปกติ';document.getElementById('r-ec').value='';
   }
-  document.getElementById('r-orig').value=JSON.stringify(origEq);
-  // Build dropdown (exclude จำหน่าย)
-  const avail=equipment.filter(e=>e.status!=='จำหน่าย'&&(e.status==='ว่าง'||origEq.includes(e.id)));
-  const warn=document.getElementById('ms-warn');
-  warn.style.display=(!avail.length&&equipment.length)?'':'none';
+  document.getElementById('r-orig').value=JSON.stringify(orig);
+  const avail=equipment.filter(e=>e.status!=='จำหน่าย'&&(e.status==='ว่าง'||orig.includes(e.id)));
+  const warn=document.getElementById('ms-warn');warn.style.display=(!avail.length&&equipment.length)?'':'none';
   msOpen=false;document.getElementById('ms-panel').style.display='none';document.getElementById('ms-btn').classList.remove('open');
-  const list=document.getElementById('ms-list');
-  list.innerHTML=avail.map(e=>`<label class="ms-item"><input type="checkbox" name="eq-pick" value="${e.id}" ${origEq.includes(e.id)?'checked':''} onchange="updateMsTags()">${thumbHtml(e,30)}<span style="flex:1;">${esc(e.name)}${e.model?` <span style="color:var(--t3);font-size:.73rem;">(${esc(e.model)})</span>`:''} ${catBadge(e.category||'อุปกรณ์')}</span>${eqSBadge(e.status)}</label>`).join('');
-  setTimeout(()=>updateMsTags(),10);
+  document.getElementById('ms-list').innerHTML=avail.map(e=>`<label class="ms-it"><input type="checkbox" name="eq-pick" value="${e.id}" ${orig.includes(e.id)?'checked':''} onchange="updTags()">${thumbH(e,30)}<span style="flex:1;">${esc(e.name)}${e.model?` <span style="color:var(--t3);font-size:.73rem;">(${esc(e.model)})</span>`:''} ${catB(e.category||'อุปกรณ์')}</span>${eqSB(e.status)}</label>`).join('');
+  setTimeout(()=>updTags(),10);
   document.getElementById('rt-modal').classList.add('open');
   setTimeout(()=>document.getElementById('r-renter').focus(),60);
 }
-function closeRentalModal(){document.getElementById('rt-modal').classList.remove('open');}
-function saveRental(){
-  const renterName=document.getElementById('r-renter').value.trim();
-  const startDate=document.getElementById('r-sd').value;
-  const startTime=document.getElementById('r-st').value;
-  const endDate=document.getElementById('r-ed').value;
-  const endTime=document.getElementById('r-et').value;
-  const contactName=document.getElementById('r-cname').value.trim();
-  const contactPhone=document.getElementById('r-cphone').value.trim();
-  const status=document.getElementById('r-status').value;
-  const priority=document.getElementById('r-pri').value;
-  const equipmentCondition=document.getElementById('r-eqcond').value;
-  const defects=document.getElementById('r-def').value.trim();
-  const notes=document.getElementById('r-notes').value.trim();
-  const rawId=document.getElementById('r-id').value;
-  const id=rawId?+rawId:null;
-  const origEq=JSON.parse(document.getElementById('r-orig').value||'[]');
-  const selEq=getSelEqIds();
+function closeRtM(){document.getElementById('rt-modal').classList.remove('open');}
+
+async function saveRental(){
+  const renterName=document.getElementById('r-renter').value.trim(),startDate=document.getElementById('r-sd').value;
+  const startTime=document.getElementById('r-st').value,endDate=document.getElementById('r-ed').value;
+  const endTime=document.getElementById('r-et').value,contactName=document.getElementById('r-cn').value.trim();
+  const contactPhone=document.getElementById('r-cp').value.trim(),status=document.getElementById('r-sts').value;
+  const priority=document.getElementById('r-pri').value,equipmentCondition=document.getElementById('r-ec').value;
+  const defects=document.getElementById('r-def').value.trim(),notes=document.getElementById('r-notes').value.trim();
+  const rawId=document.getElementById('r-id').value,id=rawId?+rawId:null;
+  const origEq=JSON.parse(document.getElementById('r-orig').value||'[]'),selEq=getSelIds();
   if(!renterName){alert('กรุณาใส่ชื่อผู้เช่า');return;}
   if(!startDate){alert('กรุณาเลือกวันที่เริ่มเช่า');return;}
   if(!endDate){alert('กรุณาเลือกวันที่สิ้นสุด');return;}
   if(!selEq.length){alert('กรุณาเลือกอุปกรณ์อย่างน้อย 1 รายการ');return;}
-  const finished=status==='เสร็จสิ้น'||status==='ยกเลิก';
-  if(finished){
-    [...new Set([...origEq,...selEq])].forEach(eid=>{const e=equipment.find(x=>x.id===eid);if(e&&e.status!=='จำหน่าย')e.status='ว่าง';});
+  const fin=status==='เสร็จสิ้น'||status==='ยกเลิก';
+  const toRel=fin?[...new Set([...origEq,...selEq])]:origEq.filter(i=>!selEq.includes(i));
+  const toBsy=fin?[]:selEq;
+  const eqUpd=[...toRel.map(eid=>{const e=equipment.find(x=>x.id===eid);if(e&&e.status!=='จำหน่าย'){e.status='ว่าง';return sb.from('equipment').update({status:'ว่าง'}).eq('id',eid);}}),...toBsy.map(eid=>{const e=equipment.find(x=>x.id===eid);if(e&&e.status!=='จำหน่าย'){e.status='ไม่ว่าง';return sb.from('equipment').update({status:'ไม่ว่าง'}).eq('id',eid);}})].filter(Boolean);
+  await Promise.all(eqUpd);
+  const obj={renterName,startDate,startTime,endDate,endTime,contactName,contactPhone,status,priority,equipmentCondition,defects,notes,equipmentIds:selEq};
+  const payload=rtDB(obj);
+  if(fin){
+    if(id){await sb.from('rentals').delete().eq('id',id);rentals=rentals.filter(r=>r.id!==id);const ih=history.find(r=>r.id===id);if(ih){const{data,e2}=await sb.from('history').update(payload).eq('id',id).select().single();if(!e2){const hi=history.findIndex(r=>r.id===id);if(hi>=0)history[hi]=mRt(data);}}else{const{data,e2}=await sb.from('history').insert(payload).select().single();if(!e2)history.unshift(mRt(data));}}
+    else{const{data,e2}=await sb.from('history').insert(payload).select().single();if(!e2)history.unshift(mRt(data));}
   }else{
-    origEq.filter(i=>!selEq.includes(i)).forEach(eid=>{const e=equipment.find(x=>x.id===eid);if(e&&e.status!=='จำหน่าย')e.status='ว่าง';});
-    selEq.forEach(eid=>{const e=equipment.find(x=>x.id===eid);if(e&&e.status!=='จำหน่าย')e.status='ไม่ว่าง';});
+    if(id){const ir=rentals.find(r=>r.id===id);if(ir){const{data,e2}=await sb.from('rentals').update(payload).eq('id',id).select().single();if(!e2){const ri=rentals.findIndex(r=>r.id===id);if(ri>=0)rentals[ri]=mRt(data);}}else{await sb.from('history').delete().eq('id',id);history=history.filter(r=>r.id!==id);const{data,e2}=await sb.from('rentals').insert(payload).select().single();if(!e2)rentals.unshift(mRt(data));}}
+    else{const{data,e2}=await sb.from('rentals').insert(payload).select().single();if(!e2)rentals.unshift(mRt(data));}
   }
-  const obj={id:id||nextRid++,renterName,startDate,startTime,endDate,endTime,contactName,contactPhone,status,priority,equipmentCondition,defects,notes,equipmentIds:selEq};
-  if(finished){
-    if(id){rentals=rentals.filter(r=>r.id!==id);history=history.filter(r=>r.id!==id);}
-    history.unshift(obj);
-  }else{
-    if(id){const ri=rentals.findIndex(r=>r.id===id);if(ri>=0)rentals[ri]=obj;else{history=history.filter(r=>r.id!==id);rentals.unshift(obj);}}
-    else rentals.unshift(obj);
-  }
-  save();closeRentalModal();renderAll();toast(id?'แก้ไขเรียบร้อย':'เพิ่มรายการเรียบร้อย');
+  closeRtM();renderAll();toast(id?'แก้ไขเรียบร้อย':'เพิ่มรายการเรียบร้อย');
 }
-function delRental(id){
+
+async function delRental(id){
   if(!confirm('ต้องการลบรายการนี้?'))return;
   const r=rentals.find(x=>x.id===id);
-  if(r)(r.equipmentIds||[]).forEach(eid=>{const e=equipment.find(x=>x.id===eid);if(e&&e.status!=='จำหน่าย')e.status='ว่าง';});
-  rentals=rentals.filter(x=>x.id!==id);
-  save();renderAll();toast('ลบรายการเรียบร้อย');
+  if(r){const upd=(r.equipmentIds||[]).map(eid=>{const e=equipment.find(x=>x.id===eid);if(e&&e.status!=='จำหน่าย'){e.status='ว่าง';return sb.from('equipment').update({status:'ว่าง'}).eq('id',eid);}}).filter(Boolean);await Promise.all(upd);}
+  const{error}=await sb.from('rentals').delete().eq('id',id);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  rentals=rentals.filter(x=>x.id!==id);renderAll();toast('ลบรายการเรียบร้อย');
 }
-function delHist(id){
+
+async function delHist(id){
   if(!confirm('ต้องการลบประวัตินี้?'))return;
-  history=history.filter(x=>x.id!==id);
-  save();renderHist();updateStats();toast('ลบเรียบร้อย');
+  const{error}=await sb.from('history').delete().eq('id',id);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  history=history.filter(x=>x.id!==id);renderHist();updateStats();toast('ลบเรียบร้อย');
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-load();renderAll();
+loadAll();
 </script>
 </body>
 </html>
