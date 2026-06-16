@@ -156,9 +156,141 @@ textarea{resize:none;}
 #toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;transition:all .35s cubic-bezier(.175,.885,.32,1.275);transform:translateY(80px);opacity:0;pointer-events:none;}
 .ti{color:white;padding:11px 15px;border-radius:10px;font-size:.875rem;display:flex;align-items:center;gap:7px;box-shadow:0 8px 30px rgba(0,0,0,.2);}
 ::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:10px;}
+
+/* ── Mobile Top Bar ─────────────────────────────────────── */
+.mob-top{display:none;position:fixed;top:0;left:0;right:0;z-index:100;height:54px;background:var(--sb);padding:0 1rem;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.07);}
+.ham{background:none;border:none;cursor:pointer;padding:7px;color:#94A3B8;display:flex;align-items:center;border-radius:8px;-webkit-tap-highlight-color:transparent;}
+.ham:active{background:rgba(255,255,255,.1);}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:98;-webkit-tap-highlight-color:transparent;}
+.mob-overlay.show{display:block;}
+
+/* ── Mobile Bottom Nav ──────────────────────────────────── */
+.mob-bot{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:white;border-top:1px solid var(--bo);padding-bottom:env(safe-area-inset-bottom,0px);flex-direction:row;}
+.mni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:.5rem .25rem;border:none;background:none;cursor:pointer;color:var(--t3);font-size:.6rem;font-family:"Sarabun",sans-serif;font-weight:600;-webkit-tap-highlight-color:transparent;min-height:54px;}
+.mni.active{color:var(--ac);}
+.mni svg{transition:transform .15s;}
+.mni.active svg{transform:scale(1.1);}
+
+/* ── Responsive: Mobile (≤768px) ───────────────────────── */
+@media(max-width:768px){
+  body{flex-direction:column;overflow:hidden;height:100dvh;}
+
+  /* Sidebar: drawer slide-in */
+  .sb{position:fixed;top:0;left:0;height:100%;z-index:99;width:270px;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:none;}
+  .sb.open{transform:translateX(0);box-shadow:8px 0 32px rgba(0,0,0,.25);}
+
+  /* Show mobile bars */
+  .mob-top{display:flex;}
+  .mob-bot{display:flex;}
+
+  /* Main: account for top+bottom bars */
+  main{padding:calc(54px + 1rem) 1rem calc(54px + env(safe-area-inset-bottom,0px) + .75rem);overflow-y:auto;height:100dvh;-webkit-overflow-scrolling:touch;}
+
+  /* Stat cards: 2 col */
+  .sc-g{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem;}
+  .sc{padding:.75rem;gap:10px;}
+  .sc-i{width:36px;height:36px;flex-shrink:0;}
+  .sc-v{font-size:1.25rem;}
+  .sc-l{font-size:.6rem;}
+
+  /* Category tabs: horizontal scroll */
+  .ctabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px;scrollbar-width:none;gap:5px;}
+  .ctabs::-webkit-scrollbar{display:none;}
+  .ctab{font-size:.75rem;padding:.3rem .7rem;white-space:nowrap;}
+
+  /* Filter bar: stack */
+  .fb{flex-direction:column;gap:7px;}
+  .fb-sw,.fb select,.sd{width:100%;}
+  .fb-sw{min-width:unset;}
+  .sd{justify-content:center;padding:.55rem;}
+
+  /* Page header */
+  .ph{margin-bottom:.875rem;gap:.625rem;}
+  .pt{font-size:1.0625rem;}
+  .ps{font-size:.75rem;}
+  .bp{padding:.55rem .875rem;font-size:.8125rem;min-height:42px;}
+
+  /* Tables: horizontal scroll */
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{min-width:580px;font-size:.78rem;}
+  thead th{padding:.6rem .7rem;font-size:.6rem;}
+  tbody td{padding:.65rem .7rem;}
+
+  /* View toggle: full width */
+  .vt{width:100%;margin-bottom:.75rem;}
+  .vb{flex:1;justify-content:center;font-size:.78rem;padding:.4rem .5rem;}
+
+  /* Form grids: single col */
+  .fg2,.fg3{grid-template-columns:1fr;}
+
+  /* Modals: slide up from bottom */
+  .mo{padding:0;align-items:flex-end;}
+  .mb{border-radius:20px 20px 0 0;max-width:100%!important;margin:0!important;max-height:94dvh;display:flex;flex-direction:column;}
+  .mh{padding:1rem 1.25rem;flex-shrink:0;}
+  .mbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1rem;}
+  .msc{max-height:none!important;overflow-y:visible;}
+  .mf{flex-shrink:0;padding:.875rem 1rem;padding-bottom:calc(.875rem + env(safe-area-inset-bottom,0px));}
+
+  /* List card: single col meta */
+  .lc-m{grid-template-columns:1fr;}
+  .lc-m div[style*="span 2"]{grid-column:span 1;}
+
+  /* Touch targets */
+  .ib{padding:8px;min-width:36px;min-height:36px;}
+  .ni{padding:.75rem 1rem;font-size:.875rem;}
+
+  /* Multi-select: taller list for touch */
+  .ms-l{max-height:210px;}
+  .ms-it{padding:10px 12px;min-height:44px;}
+  .ms-it input[type=checkbox]{width:17px;height:17px;}
+
+  /* Toast: above bottom nav */
+  #toast{bottom:calc(60px + env(safe-area-inset-bottom,0px) + .75rem);right:.875rem;}
+
+  /* Lightbox close btn: bigger touch target */
+  .lb-x{width:44px;height:44px;top:1rem;right:1rem;}
+
+  /* Img drop: compact */
+  .img-drop{padding:1rem .75rem;}
+
+  /* Inputs: prevent zoom on iOS (font-size >= 16px) */
+  input[type=text],input[type=tel],input[type=date],input[type=time],input[type=number],select,textarea{font-size:16px;}
+}
+
+/* ── Responsive: Tablet (769–1024px) ───────────────────── */
+@media(min-width:769px) and (max-width:1024px){
+  .sb{width:210px;}
+  .sc-g{grid-template-columns:repeat(3,1fr);}
+  .fg3{grid-template-columns:1fr 1fr;}
+  main{padding:1.25rem;}
+  .mb{max-width:88vw!important;}
+  table{font-size:.78rem;}
+}
+
+/* ── Mac / Large Desktop (≥1280px) ─────────────────────── */
+@media(min-width:1280px){
+  .sb{width:260px;}
+  .sc-g{grid-template-columns:repeat(5,1fr);}
+  main{padding:1.75rem;}
+}
 </style>
 </head>
 <body>
+
+<!-- Mobile top bar -->
+<div class="mob-top" id="mob-top">
+  <button class="ham" onclick="openSidebar()" aria-label="เปิดเมนู">
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="sb-ic" style="width:28px;height:28px;border-radius:7px;"><svg width="15" height="15" fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></div>
+    <span style="color:white;font-weight:700;font-size:.875rem;">Studio Manager</span>
+  </div>
+  <div style="width:36px;"></div>
+</div>
+
+<!-- Mobile sidebar overlay -->
+<div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
 
 <!-- Loader -->
 <div id="app-loader">
@@ -414,7 +546,17 @@ function today(){return new Date().toISOString().split('T')[0];}
 const thumbH=(e,sz=44)=>e.image?`<img class="eq-th" src="${e.image}" style="width:${sz}px;height:${sz}px;" onclick="event.stopPropagation();showLb(this.src)" title="ดูรูป">`:`<div class="th-ph" style="width:${sz}px;height:${sz}px;"><svg width="${Math.round(sz*.46)}" height="${Math.round(sz*.46)}" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>`;
 
 // ── Nav ───────────────────────────────────────────────────────────────────────
-function setSection(n){curSec=n;document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));document.getElementById('section-'+n).classList.add('active');document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));document.getElementById('nav-'+n).classList.add('active');renderAll();}
+function setSection(n){
+  curSec=n;
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.getElementById('section-'+n).classList.add('active');
+  document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-'+n).classList.add('active');
+  document.querySelectorAll('.mni').forEach(b=>b.classList.remove('active'));
+  const mn=document.getElementById('mni-'+n);if(mn)mn.classList.add('active');
+  closeSidebar();
+  renderAll();
+}
 function setView(v){curView=v;['table','cal','list'].forEach(x=>{document.getElementById('view-'+x).style.display=x===v?'':'none';document.getElementById('vb-'+x).classList.toggle('active',x===v);});if(v==='cal')renderCal();else renderRentals();}
 
 // ── Sort dir ──────────────────────────────────────────────────────────────────
@@ -728,8 +870,36 @@ async function delHist(id){
   history=history.filter(x=>x.id!==id);renderHist();updateStats();toast('ลบเรียบร้อย');
 }
 
+// ── Mobile sidebar ────────────────────────────────────────────────────────────
+function openSidebar(){
+  document.querySelector('.sb').classList.add('open');
+  document.getElementById('mob-overlay').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function closeSidebar(){
+  document.querySelector('.sb').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('show');
+  document.body.style.overflow='';
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 loadAll();
 </script>
+<!-- Mobile bottom nav -->
+<nav class="mob-bot" role="navigation">
+  <button class="mni active" id="mni-eq" onclick="setSection('eq')">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+    คลัง
+  </button>
+  <button class="mni" id="mni-rental" onclick="setSection('rental')">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+    เช่า
+  </button>
+  <button class="mni" id="mni-hist" onclick="setSection('hist')">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    ประวัติ
+  </button>
+</nav>
+
 </body>
 </html>
