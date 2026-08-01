@@ -1923,19 +1923,6 @@ function waitReady(timeoutMs){
     })();
   });
 }
-function downloadBlob(canvas,filename){
-  return new Promise(function(resolve){
-    canvas.toBlob(function(blob){
-      if(!blob){ resolve(false); return; }
-      var url=URL.createObjectURL(blob);
-      var a=document.createElement('a');
-      a.href=url; a.download=filename;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(function(){URL.revokeObjectURL(url);},2000);
-      resolve(true);
-    },'image/png');
-  });
-}
 async function dlPDF(btn){
   var orig=btn.textContent; btn.textContent='⏳ กำลังสร้าง PDF...'; btn.disabled=true;
   try{
@@ -1960,12 +1947,50 @@ async function dlImg(btn){
     await waitReady();
     if(document.fonts && document.fonts.ready) await document.fonts.ready;
     var sheets=Array.prototype.slice.call(document.querySelectorAll('.a4-page'));
+    // Remove old preview
+    var oldWrap=document.getElementById('img-preview-wrap');
+    if(oldWrap) oldWrap.remove();
+    // Create preview container
+    var wrap=document.createElement('div');
+    wrap.id='img-preview-wrap';
+    wrap.style.cssText='padding:16px 0;text-align:center;';
+    var hint=document.createElement('p');
+    hint.style.cssText='font-size:12px;color:#475569;margin-bottom:12px;padding:8px 14px;background:#f8fafc;border-radius:8px;display:inline-block;';
+    hint.innerHTML='💡 <b>Mac/Safari:</b> คลิกขวาที่รูป → Save Image As…&nbsp;&nbsp;|&nbsp;&nbsp;<b>มือถือ:</b> กดค้างที่รูป → บันทึกรูปภาพ';
+    wrap.appendChild(hint);
+    document.querySelector('.no-print').insertAdjacentElement('beforebegin',wrap);
     for(var i=0;i<sheets.length;i++){
       var canvas=await html2canvas(sheets[i],{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff'});
       var sfx=sheets.length>1?('-หน้า'+(i+1)):'';
-      await downloadBlob(canvas,'${fname}'+sfx+'.png');
+      var filename='${fname}'+sfx+'.png';
+      var dataURL=canvas.toDataURL('image/png');
+      // 1: Try auto-download (Chrome/Firefox/Edge on Mac)
+      var a=document.createElement('a');
+      a.href=dataURL; a.download=filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      // 2: Show image for manual save (Safari/iOS fallback)
+      var imgDiv=document.createElement('div');
+      imgDiv.style.cssText='margin:10px auto;display:inline-block;';
+      var img=document.createElement('img');
+      img.src=dataURL; img.alt=filename;
+      img.title='คลิกขวาเพื่อบันทึก: '+filename;
+      img.style.cssText='max-width:90vw;height:auto;border:1.5px solid #bae6fd;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.1);cursor:pointer;display:block;';
+      (function(imgEl,fn,durl){
+        imgEl.onclick=function(){
+          var a2=document.createElement('a');
+          a2.href=durl; a2.download=fn;
+          document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+        };
+      })(img,filename,dataURL);
+      imgDiv.appendChild(img);
+      var cap=document.createElement('p');
+      cap.style.cssText='font-size:11px;color:#94a3b8;margin-top:5px;';
+      cap.textContent=filename;
+      imgDiv.appendChild(cap);
+      wrap.appendChild(imgDiv);
       if(i<sheets.length-1) await new Promise(function(r){setTimeout(r,300);});
     }
+    wrap.scrollIntoView({behavior:'smooth'});
   }catch(e){ alert('เกิดข้อผิดพลาด: '+(e&&e.message?e.message:String(e))); }
   btn.textContent=orig; btn.disabled=false;
 }
